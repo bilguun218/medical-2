@@ -438,6 +438,7 @@ function setLanguage(language) {
   });
 
   renderSearchResults(searchInput?.value || "");
+  updateBrandName(nextLanguage);
 }
 
 function setHeaderState() {
@@ -490,12 +491,38 @@ function setTheme(theme) {
   themeButtons.forEach((button) => {
     button.setAttribute("aria-label", theme === "dark" ? "Switch to light mode" : "Switch to dark mode");
   });
+  updateBrandLogo();
 }
 
 function initTheme() {
   const saved = localStorage.getItem("novitas-theme");
   const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   setTheme(saved || preferred);
+}
+
+function updateBrandLogo() {
+  const logos = document.querySelectorAll(".brand-logo");
+  const theme = html.dataset.theme === "dark" ? "dark" : "light";
+  logos.forEach((img) => {
+    try {
+      const light = img.getAttribute("data-logo-light");
+      const dark = img.getAttribute("data-logo-dark");
+      if (theme === "dark" && dark) img.src = dark;
+      else if (theme === "light" && light) img.src = light;
+    } catch (e) {
+      // ignore
+    }
+  });
+}
+
+function updateBrandName(language) {
+  const names = document.querySelectorAll(".brand-name");
+  const lang = language === "mn" ? "mn" : "en";
+  names.forEach((el) => {
+    const en = el.getAttribute("data-name-en");
+    const mn = el.getAttribute("data-name-mn");
+    el.textContent = lang === "mn" ? (mn || en || el.textContent) : (en || mn || el.textContent);
+  });
 }
 
 function initLanguageToggles() {

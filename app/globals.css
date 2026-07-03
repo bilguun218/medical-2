@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 213 77% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 213 77% 11%;
+  --muted: 210 40% 97%;
+  --muted-foreground: 214 17% 42%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 210 76% 50%;
+}
+
+.dark {
+  --background: 214 61% 6%;
+  --foreground: 210 40% 98%;
+  --card: 213 47% 10%;
+  --card-foreground: 210 40% 98%;
+  --muted: 213 38% 14%;
+  --muted-foreground: 214 20% 72%;
+  --border: 213 31% 20%;
+  --input: 213 31% 20%;
+  --ring: 178 79% 42%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(23, 190, 187, 0.28);
+}
+
+.site-shell {
+  background:
+    radial-gradient(circle at top left, rgba(31, 122, 224, 0.09), transparent 34rem),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.78), rgba(255, 255, 255, 0));
+}
+
+.dark .site-shell {
+  background:
+    radial-gradient(circle at top left, rgba(23, 190, 187, 0.13), transparent 34rem),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.48), rgba(2, 6, 23, 0));
+}
+
+.focus-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+}
+
+.admin-root {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 210 76% 50%;
+}
