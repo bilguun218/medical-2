@@ -24,7 +24,9 @@ export async function GET(request: Request) {
     const inquiries = await getAdminInquiries({
       id,
       q: id ? null : searchParams.get("q"),
-      status: id ? null : searchParams.get("status")
+      status: id ? null : searchParams.get("status"),
+      date: id ? null : searchParams.get("date"),
+      month: id ? null : searchParams.get("month")
     });
     const body =
       format === "word"

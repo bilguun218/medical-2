@@ -8,7 +8,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
     const q = searchParams.get("q") || undefined;
-    const inquiries = await getAdminInquiries({ q, status });
+    const date = searchParams.get("date") || undefined;
+    const month = searchParams.get("month") || undefined;
+    const inquiries = await getAdminInquiries({ q, status, date, month });
     return NextResponse.json(inquiries);
   } catch (error) {
     return apiError(error);
