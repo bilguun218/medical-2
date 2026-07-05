@@ -47,6 +47,8 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     revalidatePath("/admin/news");
     revalidatePath("/mn");
     revalidatePath("/en");
+    revalidatePath("/mn/about");
+    revalidatePath("/en/about");
     revalidatePath("/mn/products");
     revalidatePath("/en/products");
     revalidatePath("/mn/news");

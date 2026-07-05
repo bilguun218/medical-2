@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,11 +90,21 @@ export function MediaField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const hasValue = value.trim().length > 0;
+
   return (
     <div className="grid gap-2">
       <Label>{label}</Label>
       <MediaUpload value={value} onChange={(url) => onChange(url)} />
-      <Input value={value} onChange={(event) => onChange(event.target.value)} placeholder="/uploads/image.jpg" />
+      <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+        <Input value={value} onChange={(event) => onChange(event.target.value)} placeholder="/uploads/image.jpg" />
+        {hasValue ? (
+          <Button type="button" variant="outline" onClick={() => onChange("")}>
+            <X className="h-4 w-4" />
+            Цэвэрлэх
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }
