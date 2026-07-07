@@ -17,8 +17,7 @@ const themeScript = `
 (() => {
   try {
     const stored = localStorage.getItem("novitas-theme") || localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const dark = stored ? stored === "dark" : prefersDark;
+    const dark = stored === "dark";
     document.documentElement.classList.toggle("dark", dark);
     document.documentElement.dataset.theme = dark ? "dark" : "light";
   } catch {

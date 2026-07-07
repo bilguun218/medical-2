@@ -9,7 +9,7 @@ export function ThemeToggle() {
 
   useEffect(() => {
     const stored = window.localStorage.getItem("novitas-theme") || window.localStorage.getItem("theme");
-    const shouldDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldDark = stored === "dark";
     document.documentElement.classList.toggle("dark", shouldDark);
     document.documentElement.dataset.theme = shouldDark ? "dark" : "light";
     setDark(shouldDark);
