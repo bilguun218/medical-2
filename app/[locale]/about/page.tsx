@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { CheckCircle2, FileCheck2, HeartPulse, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CompanyHistory } from "@/components/site/company-history";
 import { MotionReveal } from "@/components/site/motion-reveal";
 import { RichText } from "@/components/site/rich-text";
 import { SectionHeading } from "@/components/site/section-heading";
 import { getCmsContent, getSeoRecord, localized } from "@/lib/cms";
 import { dictionary, getLocale } from "@/lib/i18n";
 import { createMetadata } from "@/lib/seo";
+import { cn } from "@/lib/utils";
 
 type PageProps = { params: Promise<{ locale: string }> };
 
@@ -35,6 +37,8 @@ export default async function AboutPage({ params }: PageProps) {
   const locale = getLocale(rawLocale);
   const dict = dictionary[locale];
   const content = await getCmsContent("about");
+  const companyHistory = localized(content.companyHistory, locale);
+  const ceoMessage = localized(content.ceoMessage, locale);
 
   return (
     <main className="page-reveal">
@@ -105,26 +109,19 @@ export default async function AboutPage({ params }: PageProps) {
         </div>
       </section>
 
-      {localized(content.companyHistory, locale) || localized(content.ceoMessage, locale) ? (
+      {companyHistory || ceoMessage ? (
         <section className="premium-section bg-white/72">
-          <div className="premium-container grid gap-6 lg:grid-cols-2">
-            {localized(content.companyHistory, locale) ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{locale === "mn" ? "Компанийн түүх" : "Company history"}</CardTitle>
-                </CardHeader>
-                <div className="px-6 pb-6">
-                  <RichText html={localized(content.companyHistory, locale)} />
-                </div>
-              </Card>
+          <div className={cn("premium-container grid gap-6", companyHistory && ceoMessage && "lg:grid-cols-2")}>
+            {companyHistory ? (
+              <CompanyHistory html={companyHistory} locale={locale} />
             ) : null}
-            {localized(content.ceoMessage, locale) ? (
+            {ceoMessage ? (
               <Card>
                 <CardHeader>
                   <CardTitle>{locale === "mn" ? "CEO мэндчилгээ" : "CEO message"}</CardTitle>
                 </CardHeader>
                 <div className="px-6 pb-6">
-                  <RichText html={localized(content.ceoMessage, locale)} />
+                  <RichText html={ceoMessage} />
                 </div>
               </Card>
             ) : null}
