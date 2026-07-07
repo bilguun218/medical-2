@@ -115,6 +115,10 @@ select {
   animation: page-reveal 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+.motion-reveal {
+  backface-visibility: hidden;
+}
+
 .premium-container {
   @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
 }
@@ -290,6 +294,66 @@ select {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 1ms !important;
+  }
+
+  .page-reveal,
+  .motion-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .page-reveal {
+    animation: none;
+  }
+
+  .motion-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .home-hero-shell::before {
+    display: none;
+  }
+
+  .home-hero-shell .blur-3xl {
+    opacity: 0.46;
+    filter: blur(22px);
+  }
+
+  .home-hero-shell [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: blur(6px) !important;
+    backdrop-filter: blur(6px) !important;
+  }
+
+  .home-showcase-card {
+    box-shadow:
+      0 18px 42px rgba(11, 47, 85, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+
+  .home-showcase-image-frame img {
+    filter: none;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .premium-card-hover,
+  .premium-image,
+  .home-partner-logo {
+    transition: none;
+  }
+
+  .premium-card-hover:hover,
+  .group:hover .premium-image {
+    transform: none;
   }
 }
 

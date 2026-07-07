@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { HeaderContent } from "@/lib/cms";
 import type { Locale } from "@/lib/i18n";
 import { dictionary, otherLocale } from "@/lib/i18n";
@@ -21,6 +21,7 @@ function withLocale(href: string, locale: Locale) {
 export function SiteHeader({ locale, content }: { locale: Locale; content: HeaderContent }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const scrolledRef = useRef(false);
   const pathname = usePathname();
   const dict = dictionary[locale];
   const alternate = otherLocale(locale);
@@ -31,13 +32,32 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: Heade
   const logo = content.logo || "/brand/novytas-logo.png";
 
   useEffect(() => {
-    function onScroll() {
-      setScrolled(window.scrollY > 8);
+    let frame = 0;
+
+    function applyScrolledState() {
+      frame = 0;
+      const nextScrolled = window.scrollY > 8;
+
+      if (scrolledRef.current !== nextScrolled) {
+        scrolledRef.current = nextScrolled;
+        setScrolled(nextScrolled);
+      }
     }
 
-    onScroll();
+    function onScroll() {
+      if (frame) return;
+      frame = window.requestAnimationFrame(applyScrolledState);
+    }
+
+    applyScrolledState();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return (
