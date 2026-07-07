@@ -24,11 +24,11 @@ export async function AdminShell({
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <div className="flex min-h-screen flex-col lg:flex-row">
         <AdminSidebar activePath={activePath} />
-        <main className="min-h-screen flex-1">
-          <header className="flex items-center justify-between border-b bg-white px-4 py-4 sm:px-6 lg:px-8">
-            <div>
-              <h1 className="text-2xl font-semibold">{title}</h1>
-              <p className="text-sm text-slate-500">{session.user.email}</p>
+        <main className="min-h-screen min-w-0 flex-1">
+          <header className="flex flex-col gap-3 border-b bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4 lg:px-8">
+            <div className="min-w-0">
+              <h1 className="truncate text-xl font-semibold sm:text-2xl">{title}</h1>
+              <p className="truncate text-sm text-slate-500">{session.user.email}</p>
             </div>
             <form
               action={async () => {
@@ -41,7 +41,7 @@ export async function AdminShell({
               </Button>
             </form>
           </header>
-          <div className="p-4 sm:p-6 lg:p-8">{children}</div>
+          <div className="p-3 sm:p-6 lg:p-8">{children}</div>
         </main>
       </div>
     </div>

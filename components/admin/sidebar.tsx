@@ -81,28 +81,19 @@ export function AdminSidebar({ activePath }: { activePath?: string }) {
       </aside>
 
       <div className="sticky top-0 z-40 border-b border-white/10 bg-slate-950 text-white lg:hidden">
-        <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <div className="px-4 py-3">
           <div className="min-w-0">
             <p className="truncate text-base font-semibold">NOVYTAS Админ</p>
             <p className="text-xs text-white/55">Дотоод удирдлагын систем</p>
           </div>
-          <Link
-            href="/admin/content/visual"
-            className={cn(
-              "shrink-0 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white/75",
-              isActive(activePath, "/admin/content/visual") && "bg-white text-slate-950"
-            )}
-          >
-            Visual editor
-          </Link>
         </div>
-        <nav className="flex gap-2 overflow-x-auto px-3 pb-3">
+        <nav className="flex snap-x gap-2 overflow-x-auto px-3 pb-3">
           {[...primaryItems, ...contentItems].map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white",
+                "flex shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white",
                 isActive(activePath, item.href) && "bg-white/10 text-white"
               )}
             >

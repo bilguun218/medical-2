@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Contact, FileText, Home, ImageIcon, LayoutTemplate, Loader2, Monitor, Plus, Save, Smartphone, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Contact, FileText, Home, ImageIcon, LayoutTemplate, Loader2, Monitor, Plus, Save, Smartphone, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -200,6 +200,57 @@ function colorInputValue(value: unknown) {
   return /^#[0-9a-f]{6}$/i.test(color) ? color : "#ffffff";
 }
 
+function groupForField(field: EditorField) {
+  const id = field.id;
+
+  if (id.includes(".style.")) return "Өнгө, style";
+
+  if (field.page === "home") {
+    if (id.includes("hero")) return "Баннер";
+    if (id.includes("primaryButton") || id.includes("secondaryButton")) return "Баннер товч";
+    if (id.includes("intro")) return "Танилцуулга";
+    if (id.includes("operations")) return "Үйл ажиллагаа";
+    if (id.includes("why")) return "Яагаад сонгох";
+    if (id.includes("contact")) return "CTA холбоо барих";
+  }
+
+  if (field.page === "about") {
+    if (id.includes("page") || id.includes("companyIntroduction") || id.includes("companyDescription")) return "Hero танилцуулга";
+    if (id.includes("Image")) return "Зураг";
+    if (id.includes("mission") || id.includes("vision")) return "Mission / Vision";
+    if (id.includes("values")) return "Үнэт зүйлс";
+    if (id.includes("History") || id.includes("ceo")) return "Түүх, мэндчилгээ";
+    if (id.includes("advantages")) return "Давуу тал";
+    if (id.includes("compliance")) return "Хууль, эрх зүй";
+  }
+
+  if (field.page === "contact") {
+    if (id.includes("page") || id.includes("formTitle")) return "Хуудас, form";
+    if (id.includes("company") || id.includes("address") || id.includes("phone") || id.includes("email") || id.includes("website") || id.includes("contactPerson") || id.includes("businessHours")) return "Холбоо барих detail";
+    if (id.includes("googleMaps")) return "Google Map";
+    if (id.includes("facebook") || id.includes("instagram") || id.includes("linkedin")) return "Social";
+  }
+
+  if (field.page === "chrome") {
+    if (id.startsWith("header.")) return "Header";
+    if (id.startsWith("footer.")) return "Footer";
+  }
+
+  return "Бусад";
+}
+
+function moveItem<T>(items: T[], index: number, direction: -1 | 1) {
+  const nextIndex = index + direction;
+
+  if (nextIndex < 0 || nextIndex >= items.length) {
+    return items;
+  }
+
+  const copy = [...items];
+  [copy[index], copy[nextIndex]] = [copy[nextIndex], copy[index]];
+  return copy;
+}
+
 export function VisualContentEditor({ initialValue }: { initialValue: VisualContent }) {
   const router = useRouter();
   const [content, setContent] = useState(initialValue);
@@ -212,6 +263,16 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
   const [message, setMessage] = useState<string | null>(null);
 
   const visibleFields = useMemo(() => fields.filter((field) => field.page === activePage), [activePage]);
+  const groupedVisibleFields = useMemo(() => {
+    const groups = new Map<string, EditorField[]>();
+
+    for (const field of visibleFields) {
+      const group = groupForField(field);
+      groups.set(group, [...(groups.get(group) ?? []), field]);
+    }
+
+    return Array.from(groups.entries()).map(([label, items]) => ({ label, items }));
+  }, [visibleFields]);
   const activeField = fields.find((field) => field.id === activeFieldId) ?? visibleFields[0] ?? fields[0];
   const activeValue = getAtPath(content[activeField.key], activeField.path);
 
@@ -302,7 +363,12 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
   const contactContent = content.contact;
   const header = content.header;
   const footer = content.footer;
-  const canvasWidth = viewport === "mobile" ? "max-w-[390px]" : "max-w-5xl";
+  const isMobilePreview = viewport === "mobile";
+  const canvasWidth = isMobilePreview ? "w-full max-w-[360px] sm:max-w-[390px]" : "w-full max-w-5xl";
+  const canvasPadding = isMobilePreview ? "p-3" : "p-5";
+  const canvasGap = isMobilePreview ? "gap-5" : "gap-8";
+  const heroTitleClass = isMobilePreview ? "text-2xl" : "text-4xl";
+  const sectionTitleClass = isMobilePreview ? "text-xl" : "text-2xl";
   const activeCanvasStyle =
     activePage === "home"
       ? contentStyle(home.style)
@@ -313,15 +379,15 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
           : contentStyle(footer.style);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-      <div className="grid gap-4">
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
+      <div className="grid min-w-0 gap-4">
         <Card>
-          <CardHeader className="gap-4 md:flex md:flex-row md:items-center md:justify-between">
+          <CardHeader className="gap-3 p-4 sm:p-6 md:flex md:flex-row md:items-center md:justify-between">
             <div>
               <CardTitle>Visual page editor</CardTitle>
-              <p className="mt-1 text-sm text-slate-500">Page сонгоод canvas дээрх хэсгийг дарж засна.</p>
+              <p className="mt-1 text-sm text-slate-500">Canvas дээр дарж эсвэл доорх талбараас сонгоод detail бүрийг засна.</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
               <Button type="button" variant={locale === "mn" ? "default" : "outline"} size="sm" onClick={() => setLocale("mn")}>
                 MN
               </Button>
@@ -336,8 +402,8 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
+          <CardContent className="grid gap-4 p-4 pt-0 sm:p-6 sm:pt-0">
+            <div className="flex gap-2 overflow-x-auto pb-1">
               {pages.map((page) => (
                 <Button
                   key={page.key}
@@ -345,18 +411,51 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                   variant={activePage === page.key ? "default" : "outline"}
                   size="sm"
                   onClick={() => setActivePage(page.key)}
+                  className="shrink-0"
                 >
                   <page.icon className="h-4 w-4" />
                   {page.label}
                 </Button>
               ))}
             </div>
+            <div className="rounded-xl border bg-slate-50 p-3">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Нарийн талбарууд</p>
+                  <p className="text-xs text-slate-500">{visibleFields.length} талбар засах боломжтой</p>
+                </div>
+                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500">{activeField.label}</span>
+              </div>
+              <div className="grid max-h-64 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 lg:max-h-none lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+                {groupedVisibleFields.map((group) => (
+                  <div key={group.label} className="min-w-0 rounded-lg border bg-white p-2">
+                    <p className="mb-2 truncate text-xs font-semibold uppercase text-slate-400">{group.label}</p>
+                    <div className="grid gap-1.5">
+                      {group.items.map((field) => (
+                        <button
+                          key={field.id}
+                          type="button"
+                          onClick={() => setActiveFieldId(field.id)}
+                          className={cn(
+                            "min-w-0 rounded-md border px-2.5 py-2 text-left text-xs transition hover:border-medical/40 hover:bg-medical/[0.04]",
+                            activeFieldId === field.id ? "border-medical bg-medical/[0.08] text-primary" : "border-slate-100 text-slate-600"
+                          )}
+                        >
+                          <span className="block truncate font-semibold">{field.label}</span>
+                          <span className="mt-0.5 block truncate text-[11px] text-slate-400">{field.id.replace(`${field.key}.`, "")}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <div className="overflow-auto rounded-2xl border bg-slate-100 p-4">
-          <div className={cn("mx-auto min-h-[680px] overflow-hidden rounded-2xl bg-white shadow-premium transition-all", canvasWidth)} style={activeCanvasStyle}>
-            <div className="border-b px-5 py-4" style={contentStyle(header.style)}>
+        <div className="overflow-x-auto rounded-xl border bg-slate-100 p-2 sm:rounded-2xl sm:p-4">
+          <div className={cn("mx-auto min-h-[560px] overflow-hidden rounded-xl bg-white shadow-premium transition-all sm:rounded-2xl sm:min-h-[680px]", canvasWidth)} style={activeCanvasStyle}>
+            <div className={cn("border-b", isMobilePreview ? "px-3 py-3" : "px-5 py-4")} style={contentStyle(header.style)}>
               <div className="flex items-center justify-between gap-4">
                 <EditableBlock fieldId="header.companyName" className="max-w-[220px] p-1">
                   <p className="text-base font-semibold text-primary">{textValue(header.companyName, locale)}</p>
@@ -368,11 +467,26 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
             </div>
 
             {activePage === "home" ? (
-              <div className="grid gap-8 p-5">
-                <div className="grid gap-5 rounded-2xl p-4 md:grid-cols-[1fr_280px] md:items-center" style={surfaceStyle(home.style)}>
-                  <div>
+              <div className={cn("grid", canvasGap, canvasPadding)}>
+                <div className="grid gap-2 rounded-xl border bg-white/70 p-3 sm:grid-cols-3">
+                  <EditableBlock fieldId="home.style.backgroundColor">
+                    <p className="text-xs font-semibold text-slate-500">Page background</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{home.style.backgroundColor || "Default"}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="home.style.surfaceColor">
+                    <p className="text-xs font-semibold text-slate-500">Hero background</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{home.style.surfaceColor || "Default"}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="home.style.accentColor">
+                    <p className="text-xs font-semibold text-slate-500">CTA accent</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{home.style.accentColor || "Default"}</p>
+                  </EditableBlock>
+                </div>
+
+                <div className={cn("grid rounded-2xl", isMobilePreview ? "gap-4 p-3" : "gap-5 p-4 md:grid-cols-[1fr_280px] md:items-center")} style={surfaceStyle(home.style)}>
+                  <div className="min-w-0">
                     <EditableBlock fieldId="home.heroTitle">
-                      <h2 className="text-safe text-4xl font-bold leading-tight text-primary">{textValue(home.heroTitle, locale)}</h2>
+                      <h2 className={cn("text-safe font-bold leading-tight text-primary", heroTitleClass)}>{textValue(home.heroTitle, locale)}</h2>
                     </EditableBlock>
                     <EditableBlock fieldId="home.heroSubtitle">
                       <p className="text-safe text-lg font-semibold leading-7 text-slate-700">{textValue(home.heroSubtitle, locale)}</p>
@@ -384,40 +498,99 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                       <EditableBlock fieldId="home.primaryButtonText">
                         <span className="inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white">{textValue(home.primaryButtonText, locale)}</span>
                       </EditableBlock>
+                      <EditableBlock fieldId="home.primaryButtonLink">
+                        <span className="block truncate text-xs font-semibold text-slate-500">{home.primaryButtonLink || "/"}</span>
+                      </EditableBlock>
                       <EditableBlock fieldId="home.secondaryButtonText">
                         <span className="inline-flex rounded-xl border px-4 py-2 text-sm font-semibold text-primary">{textValue(home.secondaryButtonText, locale)}</span>
                       </EditableBlock>
+                      <EditableBlock fieldId="home.secondaryButtonLink">
+                        <span className="block truncate text-xs font-semibold text-slate-500">{home.secondaryButtonLink || "/"}</span>
+                      </EditableBlock>
                     </div>
                   </div>
-                  <EditableBlock fieldId="home.heroImage">
-                    <PreviewImage src={home.heroImage} />
+                  <div className="grid gap-3">
+                    <EditableBlock fieldId="home.heroImage">
+                      <PreviewImage src={home.heroImage} />
+                    </EditableBlock>
+                    <EditableBlock fieldId="home.heroBackgroundImage">
+                      <p className="mb-2 text-xs font-semibold text-slate-500">Hero background image</p>
+                      <PreviewImage src={home.heroBackgroundImage} />
+                    </EditableBlock>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 rounded-xl border bg-white/70 p-3">
+                  <EditableBlock fieldId="home.introTitle">
+                    <h3 className={cn("text-safe font-semibold text-primary", sectionTitleClass)}>{textValue(home.introTitle, locale)}</h3>
+                  </EditableBlock>
+                  <EditableBlock fieldId="home.introDescription">
+                    <p className="text-safe text-sm leading-7 text-slate-500">{textValue(home.introDescription, locale)}</p>
                   </EditableBlock>
                 </div>
+
                 <div className="grid gap-4 md:grid-cols-2">
-                  <EditableBlock fieldId="home.operationsTitle">
-                    <h3 className="text-safe text-2xl font-semibold text-primary">{textValue(home.operationsTitle, locale)}</h3>
-                    <p className="text-safe mt-2 text-sm leading-6 text-slate-500">{textValue(home.operationsDescription, locale)}</p>
-                  </EditableBlock>
-                  <EditableBlock fieldId="home.whyTitle">
-                    <h3 className="text-safe text-2xl font-semibold text-primary">{textValue(home.whyTitle, locale)}</h3>
-                    <p className="text-safe mt-2 text-sm leading-6 text-slate-500">{textValue(home.whyDescription, locale)}</p>
-                  </EditableBlock>
+                  <div className="grid gap-2 rounded-xl border bg-white/70 p-3">
+                    <EditableBlock fieldId="home.operationsTitle">
+                      <h3 className={cn("text-safe font-semibold text-primary", sectionTitleClass)}>{textValue(home.operationsTitle, locale)}</h3>
+                    </EditableBlock>
+                    <EditableBlock fieldId="home.operationsDescription">
+                      <p className="text-safe text-sm leading-6 text-slate-500">{textValue(home.operationsDescription, locale)}</p>
+                    </EditableBlock>
+                  </div>
+                  <div className="grid gap-2 rounded-xl border bg-white/70 p-3">
+                    <EditableBlock fieldId="home.whyTitle">
+                      <h3 className={cn("text-safe font-semibold text-primary", sectionTitleClass)}>{textValue(home.whyTitle, locale)}</h3>
+                    </EditableBlock>
+                    <EditableBlock fieldId="home.whyDescription">
+                      <p className="text-safe text-sm leading-6 text-slate-500">{textValue(home.whyDescription, locale)}</p>
+                    </EditableBlock>
+                  </div>
                 </div>
-                <EditableBlock fieldId="home.contactTitle" className="bg-primary text-white" style={accentStyle(home.style)}>
-                  <h3 className="text-safe text-2xl font-semibold">{textValue(home.contactTitle, locale)}</h3>
-                  <p className="text-safe mt-2 text-sm leading-6 text-white/75">{textValue(home.contactDescription, locale)}</p>
-                </EditableBlock>
+
+                <div className="grid gap-2 rounded-xl bg-primary p-3 text-white" style={accentStyle(home.style)}>
+                  <EditableBlock fieldId="home.contactTitle" className="text-white">
+                    <h3 className={cn("text-safe font-semibold", sectionTitleClass)}>{textValue(home.contactTitle, locale)}</h3>
+                  </EditableBlock>
+                  <EditableBlock fieldId="home.contactDescription" className="text-white">
+                    <p className="text-safe text-sm leading-6 text-white/75">{textValue(home.contactDescription, locale)}</p>
+                  </EditableBlock>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <EditableBlock fieldId="home.contactButtonText" className="text-white">
+                      <span className="inline-flex rounded-xl bg-white px-4 py-2 text-sm font-semibold text-primary">{textValue(home.contactButtonText, locale)}</span>
+                    </EditableBlock>
+                    <EditableBlock fieldId="home.contactButtonLink" className="text-white">
+                      <span className="block truncate text-xs font-semibold text-white/70">{home.contactButtonLink || "/"}</span>
+                    </EditableBlock>
+                  </div>
+                </div>
               </div>
             ) : null}
 
             {activePage === "about" ? (
-              <div className="grid gap-7 p-5">
+              <div className={cn("grid", canvasGap, canvasPadding)}>
+                <div className="grid gap-2 rounded-xl border bg-white/70 p-3 sm:grid-cols-3">
+                  <EditableBlock fieldId="about.style.backgroundColor">
+                    <p className="text-xs font-semibold text-slate-500">Page background</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{about.style.backgroundColor || "Default"}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="about.style.surfaceColor">
+                    <p className="text-xs font-semibold text-slate-500">Section background</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{about.style.surfaceColor || "Default"}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="about.style.accentColor">
+                    <p className="text-xs font-semibold text-slate-500">Accent</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{about.style.accentColor || "Default"}</p>
+                  </EditableBlock>
+                </div>
                 <EditableBlock fieldId="about.companyIntroduction" className="w-fit">
                   <span className="text-xs font-semibold uppercase text-teal">{textValue(about.companyIntroduction, locale)}</span>
                 </EditableBlock>
                 <EditableBlock fieldId="about.pageTitle">
-                  <h2 className="text-safe text-4xl font-bold leading-tight text-primary">{textValue(about.pageTitle, locale)}</h2>
-                  <p className="text-safe mt-3 text-base leading-7 text-slate-500">{textValue(about.pageSubtitle, locale)}</p>
+                  <h2 className={cn("text-safe font-bold leading-tight text-primary", heroTitleClass)}>{textValue(about.pageTitle, locale)}</h2>
+                </EditableBlock>
+                <EditableBlock fieldId="about.pageSubtitle">
+                  <p className="text-safe text-base leading-7 text-slate-500">{textValue(about.pageSubtitle, locale)}</p>
                 </EditableBlock>
                 <EditableBlock fieldId="about.companyDescription">
                   <p className="text-safe text-sm leading-7 text-slate-600">{textValue(about.companyDescription, locale)}</p>
@@ -472,27 +645,62 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                 </EditableBlock>
                 <EditableBlock fieldId="about.compliance">
                   <h3 className="font-semibold text-primary">Хууль, эрх зүй</h3>
-                  <p className="text-safe mt-2 text-sm leading-6 text-slate-500">{textValue(about.compliancePrinciple, locale)}</p>
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {about.compliance.slice(0, 4).map((item) => (
+                      <p key={item.title.mn} className="rounded-lg bg-slate-50 p-2 text-sm font-medium text-slate-600">{textValue(item.title, locale)}</p>
+                    ))}
+                  </div>
+                </EditableBlock>
+                <EditableBlock fieldId="about.compliancePrinciple">
+                  <p className="text-safe text-sm leading-6 text-slate-500">{textValue(about.compliancePrinciple, locale)}</p>
                 </EditableBlock>
               </div>
             ) : null}
 
             {activePage === "contact" ? (
-              <div className="grid gap-7 p-5">
+              <div className={cn("grid", canvasGap, canvasPadding)}>
+                <div className="grid gap-2 rounded-xl border bg-white/70 p-3 sm:grid-cols-3">
+                  <EditableBlock fieldId="contact.style.backgroundColor">
+                    <p className="text-xs font-semibold text-slate-500">Page background</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{contactContent.style.backgroundColor || "Default"}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="contact.style.surfaceColor">
+                    <p className="text-xs font-semibold text-slate-500">Card background</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{contactContent.style.surfaceColor || "Default"}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="contact.style.accentColor">
+                    <p className="text-xs font-semibold text-slate-500">Accent</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{contactContent.style.accentColor || "Default"}</p>
+                  </EditableBlock>
+                </div>
                 <EditableBlock fieldId="contact.pageTitle">
-                  <h2 className="text-safe text-4xl font-bold leading-tight text-primary">{textValue(contactContent.pageTitle, locale)}</h2>
-                  <p className="text-safe mt-3 text-base leading-7 text-slate-500">{textValue(contactContent.pageSubtitle, locale)}</p>
+                  <h2 className={cn("text-safe font-bold leading-tight text-primary", heroTitleClass)}>{textValue(contactContent.pageTitle, locale)}</h2>
+                </EditableBlock>
+                <EditableBlock fieldId="contact.pageSubtitle">
+                  <p className="text-safe text-base leading-7 text-slate-500">{textValue(contactContent.pageSubtitle, locale)}</p>
                 </EditableBlock>
                 <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr]">
                   <div className="grid gap-3 rounded-2xl p-3" style={surfaceStyle(contactContent.style)}>
                     <EditableBlock fieldId="contact.infoTitle">
                       <h3 className="font-semibold text-primary">{textValue(contactContent.infoTitle, locale)}</h3>
                     </EditableBlock>
+                    <EditableBlock fieldId="contact.companyName">
+                      <p className="text-safe text-sm font-semibold text-slate-700">{textValue(contactContent.companyName, locale)}</p>
+                    </EditableBlock>
                     <EditableBlock fieldId="contact.phoneNumbers">
                       <p className="text-safe text-sm text-slate-600">{textValue(contactContent.phoneNumbers, locale)}</p>
                     </EditableBlock>
                     <EditableBlock fieldId="contact.email">
                       <p className="text-safe text-sm text-slate-600">{contactContent.email}</p>
+                    </EditableBlock>
+                    <EditableBlock fieldId="contact.website">
+                      <p className="text-safe truncate text-sm text-slate-600">{contactContent.website || "website"}</p>
+                    </EditableBlock>
+                    <EditableBlock fieldId="contact.contactPerson">
+                      <p className="text-safe text-sm text-slate-600">{textValue(contactContent.contactPerson, locale)}</p>
+                    </EditableBlock>
+                    <EditableBlock fieldId="contact.businessHours">
+                      <p className="text-safe text-sm text-slate-600">{textValue(contactContent.businessHours, locale) || "Ажлын цаг"}</p>
                     </EditableBlock>
                     <EditableBlock fieldId="contact.address">
                       <p className="text-safe text-sm leading-6 text-slate-600">{textValue(contactContent.address, locale)}</p>
@@ -525,7 +733,29 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
             ) : null}
 
             {activePage === "chrome" ? (
-              <div className="grid gap-7 p-5">
+              <div className={cn("grid", canvasGap, canvasPadding)}>
+                <div className="grid gap-2 rounded-xl border bg-white/70 p-3 sm:grid-cols-3">
+                  <EditableBlock fieldId="header.style.backgroundColor">
+                    <p className="text-xs font-semibold text-slate-500">Header background</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{header.style.backgroundColor || "Default"}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="header.style.foregroundColor">
+                    <p className="text-xs font-semibold text-slate-500">Header text</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{header.style.foregroundColor || "Default"}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="header.style.accentColor">
+                    <p className="text-xs font-semibold text-slate-500">Header button</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{header.style.accentColor || "Default"}</p>
+                  </EditableBlock>
+                </div>
+                <div className="grid gap-2 rounded-xl border bg-white/70 p-3 sm:grid-cols-2">
+                  <EditableBlock fieldId="header.companyName">
+                    <p className="font-semibold text-primary">{textValue(header.companyName, locale)}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="header.contactButtonLabel">
+                    <span className="inline-flex rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" style={accentStyle(header.style)}>{textValue(header.contactButtonLabel, locale)}</span>
+                  </EditableBlock>
+                </div>
                 <EditableBlock fieldId="header.navItems">
                   <h3 className="font-semibold text-primary">Header цэс</h3>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -542,6 +772,20 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                   </EditableBlock>
                   <EditableBlock fieldId="header.darkLogo">
                     <PreviewImage src={header.darkLogo} />
+                  </EditableBlock>
+                </div>
+                <div className="grid gap-2 rounded-xl border bg-white/70 p-3 sm:grid-cols-3">
+                  <EditableBlock fieldId="footer.style.backgroundColor">
+                    <p className="text-xs font-semibold text-slate-500">Footer background</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{footer.style.backgroundColor || "Default"}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="footer.style.foregroundColor">
+                    <p className="text-xs font-semibold text-slate-500">Footer text</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{footer.style.foregroundColor || "Default"}</p>
+                  </EditableBlock>
+                  <EditableBlock fieldId="footer.style.accentColor">
+                    <p className="text-xs font-semibold text-slate-500">Footer accent</p>
+                    <p className="mt-1 truncate text-sm font-semibold text-primary">{footer.style.accentColor || "Default"}</p>
                   </EditableBlock>
                 </div>
                 <div className="rounded-2xl bg-primary p-5 text-white" style={contentStyle(footer.style)}>
@@ -640,13 +884,38 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
             ) : null}
 
             {activeField.kind === "list" ? (
-              <div className="grid gap-2">
-                <Label>Мөр бүр нэг утга</Label>
-                <Textarea
-                  rows={7}
-                  value={Array.isArray(activeValue) ? activeValue.join("\n") : ""}
-                  onChange={(event) => updateField(activeField, event.target.value.split("\n").map((item) => item.trim()).filter(Boolean))}
-                />
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between">
+                  <Label>Жагсаалт</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateField(activeField, [...((Array.isArray(activeValue) ? activeValue : []) as string[]), ""])}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Нэмэх
+                  </Button>
+                </div>
+                {((Array.isArray(activeValue) ? activeValue : []) as string[]).map((item, index, items) => (
+                  <div key={index} className="grid gap-2 rounded-lg border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-xs text-slate-500">#{index + 1}</Label>
+                      <div className="flex gap-1">
+                        <Button type="button" variant="ghost" size="icon" disabled={index === 0} onClick={() => updateField(activeField, moveItem(items, index, -1))}>
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" disabled={index === items.length - 1} onClick={() => updateField(activeField, moveItem(items, index, 1))}>
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Input value={item} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? event.target.value : value))} placeholder="Утга" />
+                  </div>
+                ))}
               </div>
             ) : null}
 
@@ -666,12 +935,24 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                 </div>
                 {((Array.isArray(activeValue) ? activeValue : []) as LocalizedValue[]).map((item, index, items) => (
                   <div key={index} className="grid gap-2 rounded-lg border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-xs text-slate-500">#{index + 1}</Label>
+                      <div className="flex gap-1">
+                        <Button type="button" variant="ghost" size="icon" disabled={index === 0} onClick={() => updateField(activeField, moveItem(items, index, -1))}>
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" disabled={index === items.length - 1} onClick={() => updateField(activeField, moveItem(items, index, 1))}>
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Label className="text-xs text-slate-500">MN</Label>
                     <Input value={item.mn} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, mn: event.target.value } : value))} placeholder="MN" />
+                    <Label className="text-xs text-slate-500">EN</Label>
                     <Input value={item.en} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, en: event.target.value } : value))} placeholder="EN" />
-                    <Button type="button" variant="ghost" size="sm" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
-                      <Trash2 className="h-4 w-4" />
-                      Устгах
-                    </Button>
                   </div>
                 ))}
               </div>
@@ -693,16 +974,28 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                 </div>
                 {((Array.isArray(activeValue) ? activeValue : []) as SectionValue[]).map((item, index, items) => (
                   <div key={index} className="grid gap-2 rounded-lg border p-3">
-                    <Label className="text-xs text-slate-500">Гарчиг</Label>
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-xs text-slate-500">#{index + 1}</Label>
+                      <div className="flex gap-1">
+                        <Button type="button" variant="ghost" size="icon" disabled={index === 0} onClick={() => updateField(activeField, moveItem(items, index, -1))}>
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" disabled={index === items.length - 1} onClick={() => updateField(activeField, moveItem(items, index, 1))}>
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Label className="text-xs text-slate-500">MN гарчиг</Label>
                     <Input value={item.title.mn} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, title: { ...value.title, mn: event.target.value } } : value))} placeholder="MN" />
+                    <Label className="text-xs text-slate-500">EN гарчиг</Label>
                     <Input value={item.title.en} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, title: { ...value.title, en: event.target.value } } : value))} placeholder="EN" />
-                    <Label className="text-xs text-slate-500">Тайлбар</Label>
+                    <Label className="text-xs text-slate-500">MN тайлбар</Label>
                     <Textarea rows={3} value={item.body.mn} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, body: { ...value.body, mn: event.target.value } } : value))} placeholder="MN" />
+                    <Label className="text-xs text-slate-500">EN тайлбар</Label>
                     <Textarea rows={3} value={item.body.en} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, body: { ...value.body, en: event.target.value } } : value))} placeholder="EN" />
-                    <Button type="button" variant="ghost" size="sm" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
-                      <Trash2 className="h-4 w-4" />
-                      Устгах
-                    </Button>
                   </div>
                 ))}
               </div>
@@ -724,18 +1017,32 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                 </div>
                 {((Array.isArray(activeValue) ? activeValue : []) as NavValue[]).map((item, index, items) => (
                   <div key={item.key} className="grid gap-2 rounded-lg border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-xs text-slate-500">#{index + 1}</Label>
+                      <div className="flex gap-1">
+                        <Button type="button" variant="ghost" size="icon" disabled={index === 0} onClick={() => updateField(activeField, moveItem(items, index, -1).map((value, order) => ({ ...value, order })))}>
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" disabled={index === items.length - 1} onClick={() => updateField(activeField, moveItem(items, index, 1).map((value, order) => ({ ...value, order })))}>
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Label className="text-xs text-slate-500">MN нэр</Label>
                     <Input value={item.label.mn} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, label: { ...value.label, mn: event.target.value } } : value))} placeholder="MN нэр" />
+                    <Label className="text-xs text-slate-500">EN нэр</Label>
                     <Input value={item.label.en} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, label: { ...value.label, en: event.target.value } } : value))} placeholder="EN нэр" />
+                    <Label className="text-xs text-slate-500">Холбоос</Label>
                     <Input value={item.href} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, href: event.target.value } : value))} placeholder="/about" />
+                    <Label className="text-xs text-slate-500">Дараалал</Label>
                     <Input type="number" value={item.order} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, order: Number(event.target.value) } : value))} />
                     <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
                       <input type="checkbox" checked={item.visible} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, visible: event.target.checked } : value))} />
                       Харагдах
                     </label>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
-                      <Trash2 className="h-4 w-4" />
-                      Устгах
-                    </Button>
                   </div>
                 ))}
               </div>
@@ -757,18 +1064,32 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                 </div>
                 {((Array.isArray(activeValue) ? activeValue : []) as LinkValue[]).map((item, index, items) => (
                   <div key={index} className="grid gap-2 rounded-lg border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-xs text-slate-500">#{index + 1}</Label>
+                      <div className="flex gap-1">
+                        <Button type="button" variant="ghost" size="icon" disabled={index === 0} onClick={() => updateField(activeField, moveItem(items, index, -1).map((value, order) => ({ ...value, order })))}>
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" disabled={index === items.length - 1} onClick={() => updateField(activeField, moveItem(items, index, 1).map((value, order) => ({ ...value, order })))}>
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Label className="text-xs text-slate-500">MN нэр</Label>
                     <Input value={item.label.mn} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, label: { ...value.label, mn: event.target.value } } : value))} placeholder="MN нэр" />
+                    <Label className="text-xs text-slate-500">EN нэр</Label>
                     <Input value={item.label.en} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, label: { ...value.label, en: event.target.value } } : value))} placeholder="EN нэр" />
+                    <Label className="text-xs text-slate-500">Холбоос</Label>
                     <Input value={item.href} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, href: event.target.value } : value))} placeholder="/products" />
+                    <Label className="text-xs text-slate-500">Дараалал</Label>
                     <Input type="number" value={item.order} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, order: Number(event.target.value) } : value))} />
                     <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
                       <input type="checkbox" checked={item.visible} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, visible: event.target.checked } : value))} />
                       Харагдах
                     </label>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
-                      <Trash2 className="h-4 w-4" />
-                      Устгах
-                    </Button>
                   </div>
                 ))}
               </div>
@@ -790,17 +1111,30 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                 </div>
                 {((Array.isArray(activeValue) ? activeValue : []) as SocialValue[]).map((item, index, items) => (
                   <div key={index} className="grid gap-2 rounded-lg border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-xs text-slate-500">#{index + 1}</Label>
+                      <div className="flex gap-1">
+                        <Button type="button" variant="ghost" size="icon" disabled={index === 0} onClick={() => updateField(activeField, moveItem(items, index, -1).map((value, order) => ({ ...value, order })))}>
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" disabled={index === items.length - 1} onClick={() => updateField(activeField, moveItem(items, index, 1).map((value, order) => ({ ...value, order })))}>
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Label className="text-xs text-slate-500">Нэр</Label>
                     <Input value={item.label} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, label: event.target.value } : value))} placeholder="Facebook" />
+                    <Label className="text-xs text-slate-500">Холбоос</Label>
                     <Input value={item.href} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, href: event.target.value } : value))} placeholder="https://" />
+                    <Label className="text-xs text-slate-500">Дараалал</Label>
                     <Input type="number" value={item.order} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, order: Number(event.target.value) } : value))} />
                     <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
                       <input type="checkbox" checked={item.visible} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, visible: event.target.checked } : value))} />
                       Харагдах
                     </label>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
-                      <Trash2 className="h-4 w-4" />
-                      Устгах
-                    </Button>
                   </div>
                 ))}
               </div>
