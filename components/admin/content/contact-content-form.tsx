@@ -63,8 +63,15 @@ export function ContactContentForm({ initialValue }: { initialValue: ContactCont
             <Input value={content.website} onChange={(event) => setContent({ ...content, website: event.target.value })} />
           </div>
           <div className="grid gap-2">
-            <Label>Google Maps оруулах холбоос</Label>
-            <Input value={content.googleMapsEmbedUrl} onChange={(event) => setContent({ ...content, googleMapsEmbedUrl: event.target.value })} />
+            <Label>Google Maps байршил</Label>
+            <Input
+              value={content.googleMapsEmbedUrl}
+              onChange={(event) => setContent({ ...content, googleMapsEmbedUrl: event.target.value })}
+              placeholder="Хаяг, газрын нэр, координат эсвэл Google Maps embed URL"
+            />
+            <p className="text-xs leading-5 text-slate-500">
+              API key тохируулсан үед хаяг/координатаас газрын зураг автоматаар үүснэ. Шууд embed URL оруулж бас болно.
+            </p>
           </div>
         </CardContent>
       </Card>

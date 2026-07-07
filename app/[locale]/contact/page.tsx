@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Clock, Globe2, Mail, MapPinned, Phone, UserRound } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContactForm } from "@/components/forms/contact-form";
+import { ContactMap } from "@/components/site/contact-map";
 import { MotionReveal } from "@/components/site/motion-reveal";
 import { SectionHeading } from "@/components/site/section-heading";
 import { getCmsContent, getSeoRecord, localized } from "@/lib/cms";
@@ -33,6 +34,7 @@ export default async function ContactPage({ params }: PageProps) {
   const locale = getLocale(rawLocale);
   const dict = dictionary[locale];
   const content = await getCmsContent("contact");
+  const address = localized(content.address, locale);
   const websiteHref = content.website ? (content.website.startsWith("http") ? content.website : `https://${content.website}`) : "";
   const websiteLabel = content.website.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const contactCards = [
@@ -41,7 +43,7 @@ export default async function ContactPage({ params }: PageProps) {
     ...(websiteHref ? [{ icon: Globe2, text: websiteLabel, href: websiteHref }] : []),
     ...(localized(content.contactPerson, locale) ? [{ icon: UserRound, text: localized(content.contactPerson, locale), href: "" }] : []),
     ...(localized(content.businessHours, locale) ? [{ icon: Clock, text: localized(content.businessHours, locale), href: "" }] : []),
-    ...(localized(content.address, locale) ? [{ icon: MapPinned, text: localized(content.address, locale), href: "" }] : [])
+    ...(address ? [{ icon: MapPinned, text: address, href: "" }] : [])
   ];
   const socialLinks = [
     content.facebook ? { label: "Facebook", href: content.facebook } : null,
@@ -89,14 +91,7 @@ export default async function ContactPage({ params }: PageProps) {
               </CardHeader>
             </Card>
           ) : null}
-          {content.googleMapsEmbedUrl ? (
-            <iframe
-              src={content.googleMapsEmbedUrl}
-              className="h-72 w-full rounded-xl border"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          ) : null}
+          <ContactMap locale={locale} mapInput={content.googleMapsEmbedUrl} fallbackLocation={address} />
         </div>
 
         <Card className="shadow-premium">
