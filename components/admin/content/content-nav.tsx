@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const items = [
+  { href: "/admin/content/visual", label: "Visual editor" },
   { href: "/admin/content/home", label: "Нүүр" },
   { href: "/admin/content/about", label: "Бидний тухай" },
   { href: "/admin/content/contact", label: "Холбоо барих" },

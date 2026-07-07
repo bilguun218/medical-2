@@ -7,6 +7,7 @@ const keys = Object.keys(cmsSchemas) as CmsKey[];
 
 function revalidateContent(key: CmsKey) {
   revalidatePath("/admin/content");
+  revalidatePath("/admin/content/visual");
   revalidatePath(`/admin/content/${key}`);
   revalidatePath("/", "layout");
   revalidatePath("/mn", "layout");
