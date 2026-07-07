@@ -1,10 +1,3 @@
-const embedApiKey =
-  process.env.GOOGLE_MAPS_EMBED_API_KEY ||
-  process.env.GOOGLE_MAPS_API_KEY ||
-  process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_API_KEY ||
-  process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-  "";
-
 function isGoogleMapsEmbedUrl(value: string) {
   try {
     const url = new URL(value);
@@ -24,6 +17,25 @@ function isUrl(value: string) {
   }
 }
 
+function keylessEmbedUrl(location: string) {
+  return `https://maps.google.com/maps?q=${encodeURIComponent(location)}&z=16&output=embed`;
+}
+
+function locationFromEmbedUrl(value: string) {
+  try {
+    const url = new URL(value);
+    const query = url.searchParams.get("q");
+
+    if (query) {
+      return query;
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
+}
+
 export function resolveGoogleMapSource(mapInput: string, fallbackLocation = "") {
   const value = mapInput.trim() || fallbackLocation.trim();
 
@@ -32,6 +44,12 @@ export function resolveGoogleMapSource(mapInput: string, fallbackLocation = "") 
   }
 
   if (isGoogleMapsEmbedUrl(value)) {
+    const location = locationFromEmbedUrl(value);
+
+    if (location) {
+      return { embedUrl: keylessEmbedUrl(location), searchUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`, label: fallbackLocation.trim() || location };
+    }
+
     return { embedUrl: value, searchUrl: value, label: fallbackLocation.trim() || value };
   }
 
@@ -41,9 +59,7 @@ export function resolveGoogleMapSource(mapInput: string, fallbackLocation = "") 
 
   const encodedLocation = encodeURIComponent(value);
   const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
-  const embedUrl = embedApiKey
-    ? `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(embedApiKey)}&q=${encodedLocation}`
-    : `https://www.google.com/maps?q=${encodedLocation}&output=embed`;
+  const embedUrl = keylessEmbedUrl(value);
 
   return { embedUrl, searchUrl, label: value };
 }

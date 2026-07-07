@@ -70,7 +70,7 @@ export function ContactContentForm({ initialValue }: { initialValue: ContactCont
               placeholder="Хаяг, газрын нэр, координат эсвэл Google Maps embed URL"
             />
             <p className="text-xs leading-5 text-slate-500">
-              API key тохируулсан үед хаяг/координатаас газрын зураг автоматаар үүснэ. Шууд embed URL оруулж бас болно.
+              Хаяг, газрын нэр эсвэл координат оруулбал газрын зураг автоматаар гарна. Шууд Google Maps embed URL оруулж бас болно.
             </p>
           </div>
         </CardContent>
