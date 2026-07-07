@@ -1,5 +1,4 @@
 import { AdminShell } from "@/components/admin/admin-shell";
-import { ContentNav } from "@/components/admin/content/content-nav";
 import { VisualContentEditor } from "@/components/admin/content/visual-content-editor";
 import { getCmsContent } from "@/lib/cms";
 
@@ -16,7 +15,6 @@ export default async function AdminVisualContentPage() {
 
   return (
     <AdminShell title="Контент: Visual editor" activePath="/admin/content/visual">
-      <ContentNav activePath="/admin/content/visual" />
       <VisualContentEditor initialValue={{ home, about, contact, header, footer }} />
     </AdminShell>
   );

@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Contact, FileText, Home, ImageIcon, LayoutTemplate, Loader2, Monitor, Save, Smartphone } from "lucide-react";
+import { Check, Contact, FileText, Home, ImageIcon, LayoutTemplate, Loader2, Monitor, Plus, Save, Smartphone, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaUpload } from "@/components/admin/media-upload";
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import type { AboutContent, ContactContent, FooterContent, HeaderContent, HomeContent } from "@/lib/cms";
 import type { Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -22,8 +24,26 @@ type VisualContent = {
 
 type VisualKey = keyof VisualContent;
 type PageKey = "home" | "about" | "contact" | "chrome";
-type FieldKind = "localized-input" | "localized-textarea" | "text" | "textarea" | "url" | "image" | "list";
+type FieldKind =
+  | "localized-input"
+  | "localized-textarea"
+  | "localized-richtext"
+  | "text"
+  | "textarea"
+  | "url"
+  | "image"
+  | "list"
+  | "localized-list"
+  | "section-list"
+  | "nav-list"
+  | "quick-link-list"
+  | "social-link-list"
+  | "color";
 type LocalizedValue = { mn: string; en: string };
+type SectionValue = { title: LocalizedValue; body: LocalizedValue };
+type NavValue = { key: string; label: LocalizedValue; href: string; order: number; visible: boolean };
+type LinkValue = { label: LocalizedValue; href: string; order: number; visible: boolean };
+type SocialValue = { label: string; href: string; order: number; visible: boolean };
 
 type EditorField = {
   id: string;
@@ -42,6 +62,9 @@ const pages: Array<{ key: PageKey; label: string; icon: typeof Home }> = [
 ];
 
 const fields: EditorField[] = [
+  { id: "home.style.backgroundColor", page: "home", key: "home", path: ["style", "backgroundColor"], label: "Нүүр background", kind: "color" },
+  { id: "home.style.surfaceColor", page: "home", key: "home", path: ["style", "surfaceColor"], label: "Нүүр hero background", kind: "color" },
+  { id: "home.style.accentColor", page: "home", key: "home", path: ["style", "accentColor"], label: "Нүүр accent/CTA өнгө", kind: "color" },
   { id: "home.heroTitle", page: "home", key: "home", path: ["heroTitle"], label: "Баннерын гарчиг", kind: "localized-input" },
   { id: "home.heroSubtitle", page: "home", key: "home", path: ["heroSubtitle"], label: "Баннерын дэд гарчиг", kind: "localized-input" },
   { id: "home.heroDescription", page: "home", key: "home", path: ["heroDescription"], label: "Баннерын тайлбар", kind: "localized-textarea" },
@@ -60,6 +83,9 @@ const fields: EditorField[] = [
   { id: "home.contactButtonText", page: "home", key: "home", path: ["contactButtonText"], label: "CTA товчны текст", kind: "localized-input" },
   { id: "home.contactButtonLink", page: "home", key: "home", path: ["contactButtonLink"], label: "CTA товчны холбоос", kind: "url" },
 
+  { id: "about.style.backgroundColor", page: "about", key: "about", path: ["style", "backgroundColor"], label: "About background", kind: "color" },
+  { id: "about.style.surfaceColor", page: "about", key: "about", path: ["style", "surfaceColor"], label: "About section background", kind: "color" },
+  { id: "about.style.accentColor", page: "about", key: "about", path: ["style", "accentColor"], label: "About accent өнгө", kind: "color" },
   { id: "about.pageTitle", page: "about", key: "about", path: ["pageTitle"], label: "Хуудасны гарчиг", kind: "localized-input" },
   { id: "about.pageSubtitle", page: "about", key: "about", path: ["pageSubtitle"], label: "Хуудасны дэд гарчиг", kind: "localized-textarea" },
   { id: "about.companyIntroduction", page: "about", key: "about", path: ["companyIntroduction"], label: "Танилцуулгын badge", kind: "localized-input" },
@@ -67,11 +93,18 @@ const fields: EditorField[] = [
   { id: "about.missionLead", page: "about", key: "about", path: ["missionLead"], label: "Mission lead", kind: "localized-textarea" },
   { id: "about.mission", page: "about", key: "about", path: ["mission"], label: "Эрхэм зорилго", kind: "localized-textarea" },
   { id: "about.vision", page: "about", key: "about", path: ["vision"], label: "Алсын хараа", kind: "localized-textarea" },
-  { id: "about.companyHistory", page: "about", key: "about", path: ["companyHistory"], label: "Компанийн түүх", kind: "localized-textarea" },
-  { id: "about.ceoMessage", page: "about", key: "about", path: ["ceoMessage"], label: "CEO мэндчилгээ", kind: "localized-textarea" },
+  { id: "about.values", page: "about", key: "about", path: ["values"], label: "Үнэт зүйлс", kind: "localized-list" },
+  { id: "about.companyHistory", page: "about", key: "about", path: ["companyHistory"], label: "Компанийн түүх", kind: "localized-richtext" },
+  { id: "about.ceoMessage", page: "about", key: "about", path: ["ceoMessage"], label: "CEO мэндчилгээ", kind: "localized-richtext" },
   { id: "about.heroImage", page: "about", key: "about", path: ["heroImage"], label: "Зураг 1", kind: "image" },
   { id: "about.secondaryImage", page: "about", key: "about", path: ["secondaryImage"], label: "Зураг 2", kind: "image" },
+  { id: "about.advantages", page: "about", key: "about", path: ["advantages"], label: "Давуу талууд", kind: "section-list" },
+  { id: "about.compliancePrinciple", page: "about", key: "about", path: ["compliancePrinciple"], label: "Хууль, эрх зүйн тайлбар", kind: "localized-textarea" },
+  { id: "about.compliance", page: "about", key: "about", path: ["compliance"], label: "Хууль, эрх зүйн нийцэл", kind: "section-list" },
 
+  { id: "contact.style.backgroundColor", page: "contact", key: "contact", path: ["style", "backgroundColor"], label: "Contact background", kind: "color" },
+  { id: "contact.style.surfaceColor", page: "contact", key: "contact", path: ["style", "surfaceColor"], label: "Contact card background", kind: "color" },
+  { id: "contact.style.accentColor", page: "contact", key: "contact", path: ["style", "accentColor"], label: "Contact accent өнгө", kind: "color" },
   { id: "contact.pageTitle", page: "contact", key: "contact", path: ["pageTitle"], label: "Хуудасны гарчиг", kind: "localized-input" },
   { id: "contact.pageSubtitle", page: "contact", key: "contact", path: ["pageSubtitle"], label: "Хуудасны дэд гарчиг", kind: "localized-textarea" },
   { id: "contact.infoTitle", page: "contact", key: "contact", path: ["infoTitle"], label: "Мэдээллийн гарчиг", kind: "localized-input" },
@@ -88,14 +121,23 @@ const fields: EditorField[] = [
   { id: "contact.instagram", page: "contact", key: "contact", path: ["instagram"], label: "Instagram", kind: "url" },
   { id: "contact.linkedin", page: "contact", key: "contact", path: ["linkedin"], label: "LinkedIn", kind: "url" },
 
+  { id: "header.style.backgroundColor", page: "chrome", key: "header", path: ["style", "backgroundColor"], label: "Header background", kind: "color" },
+  { id: "header.style.foregroundColor", page: "chrome", key: "header", path: ["style", "foregroundColor"], label: "Header text color", kind: "color" },
+  { id: "header.style.accentColor", page: "chrome", key: "header", path: ["style", "accentColor"], label: "Header button color", kind: "color" },
   { id: "header.companyName", page: "chrome", key: "header", path: ["companyName"], label: "Header компанийн нэр", kind: "localized-input" },
   { id: "header.logo", page: "chrome", key: "header", path: ["logo"], label: "Header logo", kind: "image" },
   { id: "header.darkLogo", page: "chrome", key: "header", path: ["darkLogo"], label: "Dark logo", kind: "image" },
   { id: "header.contactButtonLabel", page: "chrome", key: "header", path: ["contactButtonLabel"], label: "Header contact button", kind: "localized-input" },
+  { id: "header.navItems", page: "chrome", key: "header", path: ["navItems"], label: "Header цэс", kind: "nav-list" },
+  { id: "footer.style.backgroundColor", page: "chrome", key: "footer", path: ["style", "backgroundColor"], label: "Footer background", kind: "color" },
+  { id: "footer.style.foregroundColor", page: "chrome", key: "footer", path: ["style", "foregroundColor"], label: "Footer text color", kind: "color" },
+  { id: "footer.style.accentColor", page: "chrome", key: "footer", path: ["style", "accentColor"], label: "Footer accent өнгө", kind: "color" },
   { id: "footer.copyright", page: "chrome", key: "footer", path: ["copyright"], label: "Footer copyright", kind: "localized-input" },
   { id: "footer.description", page: "chrome", key: "footer", path: ["description"], label: "Footer description", kind: "localized-textarea" },
   { id: "footer.contactHeading", page: "chrome", key: "footer", path: ["contactHeading"], label: "Footer contact heading", kind: "localized-input" },
-  { id: "footer.quickLinksHeading", page: "chrome", key: "footer", path: ["quickLinksHeading"], label: "Footer links heading", kind: "localized-input" }
+  { id: "footer.quickLinksHeading", page: "chrome", key: "footer", path: ["quickLinksHeading"], label: "Footer links heading", kind: "localized-input" },
+  { id: "footer.quickLinks", page: "chrome", key: "footer", path: ["quickLinks"], label: "Footer quick links", kind: "quick-link-list" },
+  { id: "footer.socialLinks", page: "chrome", key: "footer", path: ["socialLinks"], label: "Footer social links", kind: "social-link-list" }
 ];
 
 function isLocalizedValue(value: unknown): value is LocalizedValue {
@@ -128,6 +170,34 @@ function textValue(value: unknown, locale: Locale) {
   if (isLocalizedValue(value)) return value[locale];
   if (Array.isArray(value)) return value.filter(Boolean).join(", ");
   return String(value ?? "");
+}
+
+function stripHtml(value: string) {
+  return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function contentStyle(style: { backgroundColor?: string; foregroundColor?: string; surfaceColor?: string; accentColor?: string }) {
+  return {
+    backgroundColor: style.backgroundColor || undefined,
+    color: style.foregroundColor || undefined
+  };
+}
+
+function surfaceStyle(style: { surfaceColor?: string }) {
+  return {
+    backgroundColor: style.surfaceColor || undefined
+  };
+}
+
+function accentStyle(style: { accentColor?: string }) {
+  return {
+    backgroundColor: style.accentColor || undefined
+  };
+}
+
+function colorInputValue(value: unknown) {
+  const color = String(value || "");
+  return /^#[0-9a-f]{6}$/i.test(color) ? color : "#ffffff";
 }
 
 export function VisualContentEditor({ initialValue }: { initialValue: VisualContent }) {
@@ -188,11 +258,13 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
   function EditableBlock({
     fieldId,
     children,
-    className
+    className,
+    style
   }: {
     fieldId: string;
     children: React.ReactNode;
     className?: string;
+    style?: React.CSSProperties;
   }) {
     const selected = activeFieldId === fieldId;
 
@@ -205,6 +277,7 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
           selected && "border-medical bg-medical/[0.07] shadow-[0_0_0_3px_rgba(23,105,209,0.10)]",
           className
         )}
+        style={style}
       >
         {children}
       </button>
@@ -230,6 +303,14 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
   const header = content.header;
   const footer = content.footer;
   const canvasWidth = viewport === "mobile" ? "max-w-[390px]" : "max-w-5xl";
+  const activeCanvasStyle =
+    activePage === "home"
+      ? contentStyle(home.style)
+      : activePage === "about"
+        ? contentStyle(about.style)
+        : activePage === "contact"
+          ? contentStyle(contactContent.style)
+          : contentStyle(footer.style);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -274,21 +355,21 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
         </Card>
 
         <div className="overflow-auto rounded-2xl border bg-slate-100 p-4">
-          <div className={cn("mx-auto min-h-[680px] overflow-hidden rounded-2xl bg-white shadow-premium transition-all", canvasWidth)}>
-            <div className="border-b px-5 py-4">
+          <div className={cn("mx-auto min-h-[680px] overflow-hidden rounded-2xl bg-white shadow-premium transition-all", canvasWidth)} style={activeCanvasStyle}>
+            <div className="border-b px-5 py-4" style={contentStyle(header.style)}>
               <div className="flex items-center justify-between gap-4">
                 <EditableBlock fieldId="header.companyName" className="max-w-[220px] p-1">
                   <p className="text-base font-semibold text-primary">{textValue(header.companyName, locale)}</p>
                 </EditableBlock>
                 <EditableBlock fieldId="header.contactButtonLabel" className="w-fit p-1">
-                  <span className="inline-flex rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white">{textValue(header.contactButtonLabel, locale)}</span>
+                  <span className="inline-flex rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white" style={accentStyle(header.style)}>{textValue(header.contactButtonLabel, locale)}</span>
                 </EditableBlock>
               </div>
             </div>
 
             {activePage === "home" ? (
               <div className="grid gap-8 p-5">
-                <div className="grid gap-5 md:grid-cols-[1fr_280px] md:items-center">
+                <div className="grid gap-5 rounded-2xl p-4 md:grid-cols-[1fr_280px] md:items-center" style={surfaceStyle(home.style)}>
                   <div>
                     <EditableBlock fieldId="home.heroTitle">
                       <h2 className="text-safe text-4xl font-bold leading-tight text-primary">{textValue(home.heroTitle, locale)}</h2>
@@ -322,7 +403,7 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                     <p className="text-safe mt-2 text-sm leading-6 text-slate-500">{textValue(home.whyDescription, locale)}</p>
                   </EditableBlock>
                 </div>
-                <EditableBlock fieldId="home.contactTitle" className="bg-primary text-white">
+                <EditableBlock fieldId="home.contactTitle" className="bg-primary text-white" style={accentStyle(home.style)}>
                   <h3 className="text-safe text-2xl font-semibold">{textValue(home.contactTitle, locale)}</h3>
                   <p className="text-safe mt-2 text-sm leading-6 text-white/75">{textValue(home.contactDescription, locale)}</p>
                 </EditableBlock>
@@ -341,7 +422,15 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                 <EditableBlock fieldId="about.companyDescription">
                   <p className="text-safe text-sm leading-7 text-slate-600">{textValue(about.companyDescription, locale)}</p>
                 </EditableBlock>
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <EditableBlock fieldId="about.heroImage">
+                    <PreviewImage src={about.heroImage} />
+                  </EditableBlock>
+                  <EditableBlock fieldId="about.secondaryImage">
+                    <PreviewImage src={about.secondaryImage} />
+                  </EditableBlock>
+                </div>
+                <div className="grid gap-4 rounded-2xl p-3 md:grid-cols-3" style={surfaceStyle(about.style)}>
                   <EditableBlock fieldId="about.missionLead">
                     <h3 className="font-semibold text-primary">Lead</h3>
                     <p className="text-safe mt-2 text-sm leading-6 text-slate-500">{textValue(about.missionLead, locale)}</p>
@@ -355,9 +444,35 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                     <p className="text-safe mt-2 text-sm leading-6 text-slate-500">{textValue(about.vision, locale)}</p>
                   </EditableBlock>
                 </div>
+                <EditableBlock fieldId="about.values">
+                  <h3 className="font-semibold text-primary">Үнэт зүйлс</h3>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {about.values.map((value, index) => (
+                      <span key={`${value.mn}-${index}`} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                        {textValue(value, locale)}
+                      </span>
+                    ))}
+                  </div>
+                </EditableBlock>
                 <EditableBlock fieldId="about.companyHistory">
                   <h3 className="font-semibold text-primary">Компанийн түүх</h3>
-                  <p className="text-safe mt-2 line-clamp-4 text-sm leading-6 text-slate-500">{textValue(about.companyHistory, locale).replace(/<[^>]*>/g, " ")}</p>
+                  <p className="text-safe mt-2 line-clamp-4 text-sm leading-6 text-slate-500">{stripHtml(textValue(about.companyHistory, locale))}</p>
+                </EditableBlock>
+                <EditableBlock fieldId="about.ceoMessage">
+                  <h3 className="font-semibold text-primary">CEO мэндчилгээ</h3>
+                  <p className="text-safe mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{stripHtml(textValue(about.ceoMessage, locale)) || "Хоосон"}</p>
+                </EditableBlock>
+                <EditableBlock fieldId="about.advantages">
+                  <h3 className="font-semibold text-primary">Давуу талууд</h3>
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {about.advantages.slice(0, 4).map((item) => (
+                      <p key={item.title.mn} className="rounded-lg bg-slate-50 p-2 text-sm font-medium text-slate-600">{textValue(item.title, locale)}</p>
+                    ))}
+                  </div>
+                </EditableBlock>
+                <EditableBlock fieldId="about.compliance">
+                  <h3 className="font-semibold text-primary">Хууль, эрх зүй</h3>
+                  <p className="text-safe mt-2 text-sm leading-6 text-slate-500">{textValue(about.compliancePrinciple, locale)}</p>
                 </EditableBlock>
               </div>
             ) : null}
@@ -369,7 +484,7 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                   <p className="text-safe mt-3 text-base leading-7 text-slate-500">{textValue(contactContent.pageSubtitle, locale)}</p>
                 </EditableBlock>
                 <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr]">
-                  <div className="grid gap-3">
+                  <div className="grid gap-3 rounded-2xl p-3" style={surfaceStyle(contactContent.style)}>
                     <EditableBlock fieldId="contact.infoTitle">
                       <h3 className="font-semibold text-primary">{textValue(contactContent.infoTitle, locale)}</h3>
                     </EditableBlock>
@@ -385,8 +500,19 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                     <EditableBlock fieldId="contact.googleMapsEmbedUrl">
                       <div className="flex h-36 items-center justify-center rounded-xl border bg-slate-50 text-sm font-semibold text-slate-500">Google Map</div>
                     </EditableBlock>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <EditableBlock fieldId="contact.facebook">
+                        <p className="text-xs font-semibold text-slate-500">Facebook</p>
+                      </EditableBlock>
+                      <EditableBlock fieldId="contact.instagram">
+                        <p className="text-xs font-semibold text-slate-500">Instagram</p>
+                      </EditableBlock>
+                      <EditableBlock fieldId="contact.linkedin">
+                        <p className="text-xs font-semibold text-slate-500">LinkedIn</p>
+                      </EditableBlock>
+                    </div>
                   </div>
-                  <EditableBlock fieldId="contact.formTitle">
+                  <EditableBlock fieldId="contact.formTitle" style={surfaceStyle(contactContent.style)}>
                     <h3 className="font-semibold text-primary">{textValue(contactContent.formTitle, locale)}</h3>
                     <div className="mt-4 grid gap-3">
                       <div className="h-10 rounded-lg bg-slate-100" />
@@ -400,6 +526,16 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
 
             {activePage === "chrome" ? (
               <div className="grid gap-7 p-5">
+                <EditableBlock fieldId="header.navItems">
+                  <h3 className="font-semibold text-primary">Header цэс</h3>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {header.navItems.filter((item) => item.visible).sort((a, b) => a.order - b.order).map((item) => (
+                      <span key={item.key} className="rounded-lg border px-3 py-1 text-xs font-semibold text-slate-600">
+                        {textValue(item.label, locale)}
+                      </span>
+                    ))}
+                  </div>
+                </EditableBlock>
                 <div className="grid gap-4 md:grid-cols-2">
                   <EditableBlock fieldId="header.logo">
                     <PreviewImage src={header.logo} />
@@ -408,7 +544,7 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                     <PreviewImage src={header.darkLogo} />
                   </EditableBlock>
                 </div>
-                <div className="rounded-2xl bg-primary p-5 text-white">
+                <div className="rounded-2xl bg-primary p-5 text-white" style={contentStyle(footer.style)}>
                   <EditableBlock fieldId="footer.description">
                     <h3 className="text-lg font-semibold">{textValue(header.companyName, locale)}</h3>
                     <p className="text-safe mt-2 text-sm leading-6 text-white/75">{textValue(footer.description, locale)}</p>
@@ -421,6 +557,24 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                       <p className="font-semibold">{textValue(footer.quickLinksHeading, locale)}</p>
                     </EditableBlock>
                   </div>
+                  <EditableBlock fieldId="footer.quickLinks" className="mt-4 text-white">
+                    <div className="flex flex-wrap gap-2">
+                      {footer.quickLinks.filter((item) => item.visible).sort((a, b) => a.order - b.order).map((item, index) => (
+                        <span key={`${item.href}-${index}`} className="rounded-lg bg-white/10 px-3 py-1 text-xs font-semibold">
+                          {textValue(item.label, locale)}
+                        </span>
+                      ))}
+                    </div>
+                  </EditableBlock>
+                  <EditableBlock fieldId="footer.socialLinks" className="mt-4 text-white">
+                    <div className="flex flex-wrap gap-2">
+                      {footer.socialLinks.filter((item) => item.visible).map((item, index) => (
+                        <span key={`${item.label}-${index}`} className="rounded-lg bg-white/10 px-3 py-1 text-xs font-semibold">
+                          {item.label || "Social"}
+                        </span>
+                      ))}
+                    </div>
+                  </EditableBlock>
                   <EditableBlock fieldId="footer.copyright" className="mt-4 text-white">
                     <p className="text-xs text-white/65">{textValue(footer.copyright, locale)}</p>
                   </EditableBlock>
@@ -445,7 +599,9 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
               <div className="grid gap-4">
                 <div className="grid gap-2">
                   <Label>MN</Label>
-                  {activeField.kind === "localized-textarea" ? (
+                  {activeField.kind === "localized-richtext" ? (
+                    <RichTextEditor value={activeValue.mn} minHeight="min-h-40" onChange={(mn) => updateField(activeField, { ...activeValue, mn })} />
+                  ) : activeField.kind === "localized-textarea" ? (
                     <Textarea rows={7} value={activeValue.mn} onChange={(event) => updateField(activeField, { ...activeValue, mn: event.target.value })} />
                   ) : (
                     <Input value={activeValue.mn} onChange={(event) => updateField(activeField, { ...activeValue, mn: event.target.value })} />
@@ -453,12 +609,33 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                 </div>
                 <div className="grid gap-2">
                   <Label>EN</Label>
-                  {activeField.kind === "localized-textarea" ? (
+                  {activeField.kind === "localized-richtext" ? (
+                    <RichTextEditor value={activeValue.en} minHeight="min-h-40" onChange={(en) => updateField(activeField, { ...activeValue, en })} />
+                  ) : activeField.kind === "localized-textarea" ? (
                     <Textarea rows={7} value={activeValue.en} onChange={(event) => updateField(activeField, { ...activeValue, en: event.target.value })} />
                   ) : (
                     <Input value={activeValue.en} onChange={(event) => updateField(activeField, { ...activeValue, en: event.target.value })} />
                   )}
                 </div>
+              </div>
+            ) : null}
+
+            {activeField.kind === "color" ? (
+              <div className="grid gap-3">
+                <Label>Өнгө</Label>
+                <div className="grid gap-2 sm:grid-cols-[56px_1fr]">
+                  <Input
+                    type="color"
+                    value={colorInputValue(activeValue)}
+                    onChange={(event) => updateField(activeField, event.target.value)}
+                    className="h-11 p-1"
+                  />
+                  <Input value={String(activeValue ?? "")} onChange={(event) => updateField(activeField, event.target.value)} placeholder="#ffffff эсвэл хоосон" />
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => updateField(activeField, "")}>
+                  <X className="h-4 w-4" />
+                  Default болгох
+                </Button>
               </div>
             ) : null}
 
@@ -473,9 +650,177 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
               </div>
             ) : null}
 
-            {["text", "url", "image"].includes(activeField.kind) ? (
+            {activeField.kind === "localized-list" ? (
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between">
+                  <Label>Жагсаалт</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateField(activeField, [...((Array.isArray(activeValue) ? activeValue : []) as LocalizedValue[]), { mn: "", en: "" }])}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Нэмэх
+                  </Button>
+                </div>
+                {((Array.isArray(activeValue) ? activeValue : []) as LocalizedValue[]).map((item, index, items) => (
+                  <div key={index} className="grid gap-2 rounded-lg border p-3">
+                    <Input value={item.mn} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, mn: event.target.value } : value))} placeholder="MN" />
+                    <Input value={item.en} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, en: event.target.value } : value))} placeholder="EN" />
+                    <Button type="button" variant="ghost" size="sm" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                      <Trash2 className="h-4 w-4" />
+                      Устгах
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {activeField.kind === "section-list" ? (
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between">
+                  <Label>Хэсгүүд</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateField(activeField, [...((Array.isArray(activeValue) ? activeValue : []) as SectionValue[]), { title: { mn: "", en: "" }, body: { mn: "", en: "" } }])}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Нэмэх
+                  </Button>
+                </div>
+                {((Array.isArray(activeValue) ? activeValue : []) as SectionValue[]).map((item, index, items) => (
+                  <div key={index} className="grid gap-2 rounded-lg border p-3">
+                    <Label className="text-xs text-slate-500">Гарчиг</Label>
+                    <Input value={item.title.mn} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, title: { ...value.title, mn: event.target.value } } : value))} placeholder="MN" />
+                    <Input value={item.title.en} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, title: { ...value.title, en: event.target.value } } : value))} placeholder="EN" />
+                    <Label className="text-xs text-slate-500">Тайлбар</Label>
+                    <Textarea rows={3} value={item.body.mn} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, body: { ...value.body, mn: event.target.value } } : value))} placeholder="MN" />
+                    <Textarea rows={3} value={item.body.en} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, body: { ...value.body, en: event.target.value } } : value))} placeholder="EN" />
+                    <Button type="button" variant="ghost" size="sm" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                      <Trash2 className="h-4 w-4" />
+                      Устгах
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {activeField.kind === "nav-list" ? (
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between">
+                  <Label>Header цэс</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateField(activeField, [...((Array.isArray(activeValue) ? activeValue : []) as NavValue[]), { key: `custom-${Date.now()}`, label: { mn: "", en: "" }, href: "/", order: (Array.isArray(activeValue) ? activeValue.length : 0), visible: true }])}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Нэмэх
+                  </Button>
+                </div>
+                {((Array.isArray(activeValue) ? activeValue : []) as NavValue[]).map((item, index, items) => (
+                  <div key={item.key} className="grid gap-2 rounded-lg border p-3">
+                    <Input value={item.label.mn} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, label: { ...value.label, mn: event.target.value } } : value))} placeholder="MN нэр" />
+                    <Input value={item.label.en} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, label: { ...value.label, en: event.target.value } } : value))} placeholder="EN нэр" />
+                    <Input value={item.href} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, href: event.target.value } : value))} placeholder="/about" />
+                    <Input type="number" value={item.order} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, order: Number(event.target.value) } : value))} />
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                      <input type="checkbox" checked={item.visible} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, visible: event.target.checked } : value))} />
+                      Харагдах
+                    </label>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                      <Trash2 className="h-4 w-4" />
+                      Устгах
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {activeField.kind === "quick-link-list" ? (
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between">
+                  <Label>Footer холбоос</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateField(activeField, [...((Array.isArray(activeValue) ? activeValue : []) as LinkValue[]), { label: { mn: "", en: "" }, href: "/", order: (Array.isArray(activeValue) ? activeValue.length : 0), visible: true }])}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Нэмэх
+                  </Button>
+                </div>
+                {((Array.isArray(activeValue) ? activeValue : []) as LinkValue[]).map((item, index, items) => (
+                  <div key={index} className="grid gap-2 rounded-lg border p-3">
+                    <Input value={item.label.mn} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, label: { ...value.label, mn: event.target.value } } : value))} placeholder="MN нэр" />
+                    <Input value={item.label.en} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, label: { ...value.label, en: event.target.value } } : value))} placeholder="EN нэр" />
+                    <Input value={item.href} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, href: event.target.value } : value))} placeholder="/products" />
+                    <Input type="number" value={item.order} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, order: Number(event.target.value) } : value))} />
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                      <input type="checkbox" checked={item.visible} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, visible: event.target.checked } : value))} />
+                      Харагдах
+                    </label>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                      <Trash2 className="h-4 w-4" />
+                      Устгах
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {activeField.kind === "social-link-list" ? (
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between">
+                  <Label>Сошиал холбоос</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateField(activeField, [...((Array.isArray(activeValue) ? activeValue : []) as SocialValue[]), { label: "", href: "", order: (Array.isArray(activeValue) ? activeValue.length : 0), visible: true }])}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Нэмэх
+                  </Button>
+                </div>
+                {((Array.isArray(activeValue) ? activeValue : []) as SocialValue[]).map((item, index, items) => (
+                  <div key={index} className="grid gap-2 rounded-lg border p-3">
+                    <Input value={item.label} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, label: event.target.value } : value))} placeholder="Facebook" />
+                    <Input value={item.href} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, href: event.target.value } : value))} placeholder="https://" />
+                    <Input type="number" value={item.order} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, order: Number(event.target.value) } : value))} />
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                      <input type="checkbox" checked={item.visible} onChange={(event) => updateField(activeField, items.map((value, current) => current === index ? { ...value, visible: event.target.checked } : value))} />
+                      Харагдах
+                    </label>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => updateField(activeField, items.filter((_, current) => current !== index))}>
+                      <Trash2 className="h-4 w-4" />
+                      Устгах
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {activeField.kind === "image" ? (
+              <div className="grid gap-3">
+                <Label>Зураг</Label>
+                <MediaUpload value={String(activeValue ?? "")} onChange={(url) => updateField(activeField, url)} />
+                <Input value={String(activeValue ?? "")} onChange={(event) => updateField(activeField, event.target.value)} placeholder="/uploads/image.jpg эсвэл https://..." />
+                <Button type="button" variant="outline" size="sm" onClick={() => updateField(activeField, "")}>
+                  <Trash2 className="h-4 w-4" />
+                  Зураг цэвэрлэх
+                </Button>
+              </div>
+            ) : null}
+
+            {["text", "url"].includes(activeField.kind) ? (
               <div className="grid gap-2">
-                <Label>{activeField.kind === "image" ? "Зургийн URL" : "Утга"}</Label>
+                <Label>Утга</Label>
                 <Input value={String(activeValue ?? "")} onChange={(event) => updateField(activeField, event.target.value)} />
               </div>
             ) : null}

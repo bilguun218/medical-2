@@ -9,6 +9,13 @@ const localizedTextSchema = z.object({
   en: z.string().max(50000)
 });
 
+const contentStyleSchema = z.object({
+  backgroundColor: z.string().max(40),
+  foregroundColor: z.string().max(40),
+  surfaceColor: z.string().max(40),
+  accentColor: z.string().max(40)
+});
+
 const linkItemSchema = z.object({
   label: localizedTextSchema,
   href: z.string().max(2048),
@@ -24,6 +31,7 @@ const socialLinkSchema = z.object({
 });
 
 export const homeContentSchema = z.object({
+  style: contentStyleSchema,
   heroTitle: localizedTextSchema,
   heroSubtitle: localizedTextSchema,
   heroDescription: localizedTextSchema,
@@ -46,6 +54,7 @@ export const homeContentSchema = z.object({
 });
 
 export const aboutContentSchema = z.object({
+  style: contentStyleSchema,
   pageTitle: localizedTextSchema,
   pageSubtitle: localizedTextSchema,
   companyIntroduction: localizedTextSchema,
@@ -64,6 +73,7 @@ export const aboutContentSchema = z.object({
 });
 
 export const contactContentSchema = z.object({
+  style: contentStyleSchema,
   pageTitle: localizedTextSchema,
   pageSubtitle: localizedTextSchema,
   infoTitle: localizedTextSchema,
@@ -82,6 +92,7 @@ export const contactContentSchema = z.object({
 });
 
 export const headerContentSchema = z.object({
+  style: contentStyleSchema,
   companyName: localizedTextSchema,
   logo: z.string().max(2048),
   darkLogo: z.string().max(2048),
@@ -90,6 +101,7 @@ export const headerContentSchema = z.object({
 });
 
 export const footerContentSchema = z.object({
+  style: contentStyleSchema,
   copyright: localizedTextSchema,
   description: localizedTextSchema,
   contactHeading: localizedTextSchema,
@@ -127,6 +139,12 @@ const companyAddress = text(
 );
 const contactPerson = text("Ц. Номин-Эрдэнэ, Гүйцэтгэх захирал", "Ts. Nomin-Erdene, Chief Executive Officer");
 const websiteUrl = "https://www.novytas.mn";
+const defaultStyle = {
+  backgroundColor: "",
+  foregroundColor: "",
+  surfaceColor: "",
+  accentColor: ""
+};
 const companyProfileDetails = text(
   `<table><tbody><tr><th>Компанийн нэр</th><td>Новитас ХХК (Novytas LLC)</td></tr><tr><th>Байгуулагдсан он</th><td>2019 он</td></tr><tr><th>Үйл ажиллагааны чиглэл</th><td>Эмнэлгийн тоног төхөөрөмж, эм, эмнэлгийн хэрэгслийн импорт, худалдаа</td></tr><tr><th>Тусгай зөвшөөрөл</th><td>Эм ханган нийлүүлэх байгууллагын тусгай зөвшөөрөл; Эмнэлгийн хэрэгсэл, тоног төхөөрөмж ханган нийлүүлэх тусгай зөвшөөрөл</td></tr><tr><th>Регистрийн дугаар</th><td>6449808</td></tr><tr><th>Хаяг</th><td>Монгол Улс, Улаанбаатар хот, Сүхбаатар дүүрэг, 73/6-42</td></tr></tbody></table>`,
   `<table><tbody><tr><th>Company name</th><td>Novytas LLC</td></tr><tr><th>Established</th><td>2019</td></tr><tr><th>Business scope</th><td>Import and trade of medical equipment, medicines, and medical supplies</td></tr><tr><th>Special licenses</th><td>Pharmaceutical supply organization license; medical supplies and equipment supply license</td></tr><tr><th>Registration number</th><td>6449808</td></tr><tr><th>Address</th><td>Sukhbaatar District, 73/6-42, Ulaanbaatar, Mongolia</td></tr></tbody></table>`
@@ -134,6 +152,7 @@ const companyProfileDetails = text(
 
 export const cmsDefaults: CmsContentMap = {
   home: {
+    style: defaultStyle,
     heroTitle: text("НОВИТАС", "NOVYTAS"),
     heroSubtitle: text("NOVYTAS LLC", "NOVYTAS LLC"),
     heroDescription: text(
@@ -158,6 +177,7 @@ export const cmsDefaults: CmsContentMap = {
     contactButtonLink: "/contact"
   },
   about: {
+    style: defaultStyle,
     pageTitle: text(dictionary.mn.about.title, dictionary.en.about.title),
     pageSubtitle: text(
       "Эмнэлгийн тоног төхөөрөмж • Эм, эмнэлгийн хэрэгсэл • Хүүхдийн эрүүл мэндийн бүтээгдэхүүн",
@@ -178,6 +198,7 @@ export const cmsDefaults: CmsContentMap = {
     secondaryImage: ""
   },
   contact: {
+    style: defaultStyle,
     pageTitle: text(dictionary.mn.contact.title, dictionary.en.contact.title),
     pageSubtitle: company.contactLine,
     infoTitle: text(dictionary.mn.contact.infoTitle, dictionary.en.contact.infoTitle),
@@ -195,6 +216,7 @@ export const cmsDefaults: CmsContentMap = {
     linkedin: ""
   },
   header: {
+    style: defaultStyle,
     companyName: company.name,
     logo: "/brand/novytas-logo.png",
     darkLogo: "/brand/novytas-logo-white.png",
@@ -208,6 +230,7 @@ export const cmsDefaults: CmsContentMap = {
     ]
   },
   footer: {
+    style: defaultStyle,
     copyright: company.sourceCityYear,
     description: company.contactLine,
     contactHeading: text(dictionary.mn.nav.contact, dictionary.en.nav.contact),

@@ -30,6 +30,13 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: Heade
     .filter((item) => item.visible)
     .sort((a, b) => a.order - b.order);
   const logo = content.logo || "/brand/novytas-logo.png";
+  const headerStyle = {
+    backgroundColor: content.style.backgroundColor || undefined,
+    color: content.style.foregroundColor || undefined
+  };
+  const accentStyle = {
+    backgroundColor: content.style.accentColor || undefined
+  };
 
   useEffect(() => {
     let frame = 0;
@@ -68,6 +75,7 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: Heade
           ? "border-b border-slate-200/70 bg-white/88 shadow-[0_12px_35px_rgba(11,47,85,0.06)] backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/88"
           : "border-b border-transparent bg-transparent"
       )}
+      style={headerStyle}
     >
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:h-[72px] lg:px-8">
         <Link href={`/${locale}`} className="flex items-center gap-3" aria-label="NOVYTAS home">
@@ -101,7 +109,7 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: Heade
             <Link href={alternatePath}>{dict.alternateLocaleName}</Link>
           </Button>
           <ThemeToggle />
-          <Button size="sm" asChild>
+          <Button size="sm" asChild style={accentStyle}>
             <Link href={`/${locale}/contact`}>{content.contactButtonLabel[locale] || dict.nav.contact}</Link>
           </Button>
         </div>

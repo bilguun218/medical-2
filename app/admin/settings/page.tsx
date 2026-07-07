@@ -11,11 +11,11 @@ export default function AdminSettingsPage() {
         <CardHeader>
           <Settings className="h-5 w-5 text-teal" />
           <CardTitle>Веб тохиргоо</CardTitle>
-          <CardDescription>Сайтын текст, медиа, цэс, холбоо барих мэдээлэл, хөл хэсгийн холбоос болон SEO-г Контент хэсгээс удирдана.</CardDescription>
+          <CardDescription>Сайтын текст, медиа, цэс, холбоо барих мэдээлэл болон хөл хэсгийн холбоосыг Visual editor-оос удирдана.</CardDescription>
         </CardHeader>
         <div className="px-6 pb-6">
           <Button asChild>
-            <Link href="/admin/content/home">Контент нээх</Link>
+            <Link href="/admin/content/visual">Visual editor нээх</Link>
           </Button>
         </div>
       </Card>

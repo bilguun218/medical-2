@@ -22,7 +22,7 @@ export async function AdminShell({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
-      <div className="flex">
+      <div className="flex min-h-screen flex-col lg:flex-row">
         <AdminSidebar activePath={activePath} />
         <main className="min-h-screen flex-1">
           <header className="flex items-center justify-between border-b bg-white px-4 py-4 sm:px-6 lg:px-8">

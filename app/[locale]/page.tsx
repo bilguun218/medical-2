@@ -152,12 +152,23 @@ export default async function HomePage({ params }: PageProps) {
     { icon: "service" as const, label: locale === "mn" ? "Засвар үйлчилгээ" : "Maintenance service" }
   ];
   const partnerSources = sourceCountries.map((country) => tText(country, locale));
+  const pageStyle = {
+    backgroundColor: content.style.backgroundColor || undefined,
+    color: content.style.foregroundColor || undefined
+  };
+  const heroStyle = {
+    ...(content.heroBackgroundImage ? { backgroundImage: `url(${content.heroBackgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" } : {}),
+    backgroundColor: content.style.surfaceColor || undefined
+  };
+  const accentStyle = {
+    backgroundColor: content.style.accentColor || undefined
+  };
 
   return (
-    <main className="page-reveal">
+    <main className="page-reveal" style={pageStyle}>
       <section
         className="home-hero-shell relative isolate overflow-hidden"
-        style={content.heroBackgroundImage ? { backgroundImage: `url(${content.heroBackgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+        style={heroStyle}
       >
         <div className="pointer-events-none absolute left-[8%] top-20 h-72 w-72 rounded-full bg-medical/10 blur-3xl" />
         <div className="pointer-events-none absolute right-[16%] top-10 h-56 w-56 rounded-full bg-teal/10 blur-3xl" />
@@ -380,7 +391,7 @@ export default async function HomePage({ params }: PageProps) {
       <section className="premium-section">
         <div className="premium-container">
           <MotionReveal>
-            <div className="grid gap-8 rounded-[1.5rem] bg-primary p-8 text-white shadow-premium md:p-12 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="grid gap-8 rounded-[1.5rem] bg-primary p-8 text-white shadow-premium md:p-12 lg:grid-cols-[1fr_auto] lg:items-center" style={accentStyle}>
               <div>
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white/80">
                   <CheckCircle2 className="h-4 w-4 text-teal" />

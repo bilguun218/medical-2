@@ -27,9 +27,16 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
   const socialLinks = footer.socialLinks
     .filter((item) => item.visible && item.href !== websiteHref)
     .sort((a, b) => a.order - b.order);
+  const footerStyle = {
+    backgroundColor: footer.style.backgroundColor || undefined,
+    color: footer.style.foregroundColor || undefined
+  };
+  const badgeStyle = {
+    backgroundColor: footer.style.accentColor || undefined
+  };
 
   return (
-    <footer className="bg-[#071525] text-white">
+    <footer className="bg-[#071525] text-white" style={footerStyle}>
       <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:px-8">
         <div className="lg:col-span-5">
           <div className="flex items-center gap-3">
@@ -42,7 +49,7 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
             </div>
           </div>
           <p className="mt-6 max-w-lg text-sm leading-7 text-slate-300">{localized(footer.description, locale)}</p>
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-semibold text-slate-200">
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-semibold text-slate-200" style={badgeStyle}>
             <ShieldCheck className="h-4 w-4 text-teal" />
             {locale === "mn" ? "ЭМЯ-ны тусгай зөвшөөрлийн хүрээнд" : "Operating under MOH licensing"}
           </div>

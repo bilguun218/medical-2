@@ -1,17 +1,5 @@
-import { AdminShell } from "@/components/admin/admin-shell";
-import { ContentNav } from "@/components/admin/content/content-nav";
-import { FooterContentForm } from "@/components/admin/content/footer-content-form";
-import { getCmsContent } from "@/lib/cms";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
-export default async function AdminFooterContentPage() {
-  const content = await getCmsContent("footer");
-
-  return (
-    <AdminShell title="Контент: Хөл хэсэг" activePath="/admin/content/footer">
-      <ContentNav activePath="/admin/content/footer" />
-      <FooterContentForm initialValue={content} />
-    </AdminShell>
-  );
+export default function AdminFooterContentPage() {
+  redirect("/admin/content/visual");
 }

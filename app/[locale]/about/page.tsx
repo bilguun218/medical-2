@@ -39,9 +39,16 @@ export default async function AboutPage({ params }: PageProps) {
   const content = await getCmsContent("about");
   const companyHistory = localized(content.companyHistory, locale);
   const ceoMessage = localized(content.ceoMessage, locale);
+  const pageStyle = {
+    backgroundColor: content.style.backgroundColor || undefined,
+    color: content.style.foregroundColor || undefined
+  };
+  const surfaceStyle = {
+    backgroundColor: content.style.surfaceColor || undefined
+  };
 
   return (
-    <main className="page-reveal">
+    <main className="page-reveal" style={pageStyle}>
       <section className="premium-container premium-section">
         <MotionReveal>
           <Badge className="mb-6 w-fit">{localized(content.companyIntroduction, locale)}</Badge>
@@ -70,7 +77,7 @@ export default async function AboutPage({ params }: PageProps) {
         ) : null}
       </section>
 
-      <section className="premium-section bg-white/72">
+      <section className="premium-section bg-white/72" style={surfaceStyle}>
         <div className="premium-container grid gap-6 lg:grid-cols-3">
           <Card className="premium-card-hover">
             <CardHeader>
@@ -110,7 +117,7 @@ export default async function AboutPage({ params }: PageProps) {
       </section>
 
       {companyHistory || ceoMessage ? (
-        <section className="premium-section bg-white/72">
+        <section className="premium-section bg-white/72" style={surfaceStyle}>
           <div className={cn("premium-container grid gap-6", companyHistory && ceoMessage && "lg:grid-cols-2")}>
             {companyHistory ? (
               <CompanyHistory html={companyHistory} locale={locale} />
@@ -129,7 +136,7 @@ export default async function AboutPage({ params }: PageProps) {
         </section>
       ) : null}
 
-      <section className="premium-section bg-white/72">
+      <section className="premium-section bg-white/72" style={surfaceStyle}>
         <div className="premium-container">
           <SectionHeading title={dict.about.advantages} />
           <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
