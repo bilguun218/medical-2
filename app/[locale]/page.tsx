@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { existsSync } from "fs";
 import path from "path";
@@ -26,15 +27,15 @@ import {
   tText
 } from "@/content/novytas";
 import { getCmsContent, getSeoRecord, localized, localizedHref } from "@/lib/cms";
-import { db } from "@/lib/db";
 import { dictionary, getLocale } from "@/lib/i18n";
 import { getProductCategoryOptions } from "@/lib/product-categories";
+import { getFeaturedProducts, getLatestArticles, getLatestMediaImageUrl } from "@/lib/public-data";
 import { createMetadata } from "@/lib/seo";
 import { formatDate } from "@/lib/utils";
 
 type PageProps = { params: Promise<{ locale: string }> };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale: rawLocale } = await params;
@@ -54,48 +55,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     ogImage,
     seo
   });
-}
-
-async function getLatestArticles() {
-  try {
-    return await db.article.findMany({
-      where: { status: "PUBLISHED" },
-      include: { category: true },
-      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
-      take: 3
-    });
-  } catch {
-    return [];
-  }
-}
-
-async function getFeaturedProducts() {
-  try {
-    return await db.product.findMany({
-      where: { status: "PUBLISHED" },
-      include: {
-        category: true,
-        media: { include: { media: true }, orderBy: { sortOrder: "asc" } }
-      },
-      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
-      take: 3
-    });
-  } catch {
-    return [];
-  }
-}
-
-async function getLatestMediaImageUrl() {
-  try {
-    const media = await db.media.findFirst({
-      where: { type: "IMAGE" },
-      orderBy: { createdAt: "desc" }
-    });
-
-    return media?.url ?? "";
-  } catch {
-    return "";
-  }
 }
 
 function publicAssetExists(src: string) {
@@ -275,10 +234,16 @@ export default async function HomePage({ params }: PageProps) {
                 return (
                   <MotionReveal key={product.id} style={{ transitionDelay: `${index * 45}ms` }}>
                     <Card className="premium-card-hover group h-full overflow-hidden">
-                      <div className="flex aspect-[4/3] items-center justify-center overflow-hidden bg-white">
+                      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-white">
                         {image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={image.url} alt={locale === "mn" ? image.altMn ?? title : image.altEn ?? title} className="premium-image h-full w-full object-cover" />
+                          <Image
+                            src={image.url}
+                            alt={locale === "mn" ? image.altMn ?? title : image.altEn ?? title}
+                            fill
+                            sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
+                            className="premium-image object-cover"
+                            quality={70}
+                          />
                         ) : (
                           <ImageIcon className="h-10 w-10 text-slate-300" />
                         )}

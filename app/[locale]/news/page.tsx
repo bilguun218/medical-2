@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Newspaper, Search } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,43 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MotionReveal } from "@/components/site/motion-reveal";
 import { SectionHeading } from "@/components/site/section-heading";
-import { db } from "@/lib/db";
 import { getSeoRecord } from "@/lib/cms";
 import { dictionary, getLocale } from "@/lib/i18n";
+import { getPublishedArticles } from "@/lib/public-data";
 import { createMetadata } from "@/lib/seo";
 import { formatDate } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type PageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ q?: string; category?: string }>;
 };
-
-async function getArticles(q?: string, categoryId?: string) {
-  try {
-    return await db.article.findMany({
-      where: {
-        status: "PUBLISHED",
-        ...(categoryId ? { categoryId } : {}),
-        ...(q
-          ? {
-              OR: [
-                { titleMn: { contains: q, mode: "insensitive" } },
-                { titleEn: { contains: q, mode: "insensitive" } },
-                { excerptMn: { contains: q, mode: "insensitive" } },
-                { excerptEn: { contains: q, mode: "insensitive" } }
-              ]
-            }
-          : {})
-      },
-      include: { category: true, coverImage: true },
-      orderBy: { publishedAt: "desc" }
-    });
-  } catch {
-    return [];
-  }
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale: rawLocale } = await params;
@@ -62,7 +38,7 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
   const { q, category } = await searchParams;
   const locale = getLocale(rawLocale);
   const dict = dictionary[locale];
-  const articles = await getArticles(q, category);
+  const articles = await getPublishedArticles(q, category);
 
   return (
     <main className="page-reveal premium-container premium-section">
@@ -85,8 +61,16 @@ export default async function NewsPage({ params, searchParams }: PageProps) {
             return (
               <Card key={article.id} className="premium-card-hover group overflow-hidden">
                 {article.coverImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={article.coverImage.url} alt={title} className="premium-image aspect-[16/9] w-full object-cover" />
+                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-white">
+                    <Image
+                      src={article.coverImage.url}
+                      alt={locale === "mn" ? article.coverImage.altMn ?? title : article.coverImage.altEn ?? title}
+                      fill
+                      sizes="(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
+                      className="premium-image object-cover"
+                      quality={70}
+                    />
+                  </div>
                 ) : null}
                 <CardHeader>
                   <p className="text-xs font-medium text-muted-foreground">

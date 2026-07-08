@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { CheckCircle2, FileCheck2, HeartPulse, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 type PageProps = { params: Promise<{ locale: string }> };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale: rawLocale } = await params;
@@ -70,8 +71,16 @@ export default async function AboutPage({ params }: PageProps) {
         {content.heroImage || content.secondaryImage ? (
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             {[content.heroImage, content.secondaryImage].filter(Boolean).map((image) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={image} src={image} alt={localized(content.pageTitle, locale)} className="aspect-[16/9] w-full rounded-xl border object-cover" />
+              <div key={image} className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border bg-white">
+                <Image
+                  src={image}
+                  alt={localized(content.pageTitle, locale)}
+                  fill
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  className="object-cover"
+                  quality={70}
+                />
+              </div>
             ))}
           </div>
         ) : null}

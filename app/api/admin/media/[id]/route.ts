@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { apiError, requireAdminSession } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { deleteStoredMediaFile } from "@/lib/media";
+import { revalidateMediaContent, revalidateNewsContent, revalidateProductContent } from "@/lib/revalidation";
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -45,23 +46,14 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     revalidatePath("/admin/media");
     revalidatePath("/admin/products");
     revalidatePath("/admin/news");
-    revalidatePath("/mn");
-    revalidatePath("/en");
-    revalidatePath("/mn/about");
-    revalidatePath("/en/about");
-    revalidatePath("/mn/products");
-    revalidatePath("/en/products");
-    revalidatePath("/mn/news");
-    revalidatePath("/en/news");
+    revalidateMediaContent();
 
     for (const productMedia of media.productMedia) {
-      revalidatePath(`/mn/products/${productMedia.productId}`);
-      revalidatePath(`/en/products/${productMedia.productId}`);
+      revalidateProductContent(productMedia.productId);
     }
 
     for (const article of media.articleCovers) {
-      revalidatePath(`/mn/news/${article.id}`);
-      revalidatePath(`/en/news/${article.id}`);
+      revalidateNewsContent(article.id);
     }
 
     return NextResponse.json({ ok: true, fileDeleted, warning });

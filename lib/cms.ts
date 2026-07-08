@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { unstable_cache } from "next/cache";
+import { cacheTags, PUBLIC_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 import { advantages, company, compliance, compliancePrinciple } from "@/content/novytas";
 import { editableSeoRoutes } from "@/lib/cms-routes";
 import { db } from "@/lib/db";
@@ -293,6 +295,22 @@ function settingKey(key: CmsKey) {
   return `cms:${key}`;
 }
 
+async function readCmsContent<K extends CmsKey>(key: K): Promise<CmsContentMap[K]> {
+  const setting = await db.siteSetting.findUnique({ where: { key: settingKey(key) } });
+  const merged = mergeDefaults(cmsDefaults[key], setting?.value);
+  const parsed = cmsSchemas[key].parse(merged) as CmsContentMap[K];
+
+  if (key === "footer") {
+    const footer = parsed as FooterContent;
+    return {
+      ...footer,
+      socialLinks: normalizeFooterSocialLinks(footer.socialLinks)
+    } as CmsContentMap[K];
+  }
+
+  return parsed;
+}
+
 function normalizeFooterSocialLinks(items: FooterContent["socialLinks"]) {
   const next = [...items];
 
@@ -314,19 +332,14 @@ function normalizeFooterSocialLinks(items: FooterContent["socialLinks"]) {
 
 export async function getCmsContent<K extends CmsKey>(key: K): Promise<CmsContentMap[K]> {
   try {
-    const setting = await db.siteSetting.findUnique({ where: { key: settingKey(key) } });
-    const merged = mergeDefaults(cmsDefaults[key], setting?.value);
-    const parsed = cmsSchemas[key].parse(merged) as CmsContentMap[K];
-
-    if (key === "footer") {
-      const footer = parsed as FooterContent;
-      return {
-        ...footer,
-        socialLinks: normalizeFooterSocialLinks(footer.socialLinks)
-      } as CmsContentMap[K];
-    }
-
-    return parsed;
+    return await unstable_cache(
+      () => readCmsContent(key),
+      [cacheTags.cmsKey(key)],
+      {
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+        tags: [cacheTags.cms, cacheTags.cmsKey(key)]
+      }
+    )();
   } catch {
     return cmsDefaults[key];
   }
@@ -344,7 +357,14 @@ export async function saveCmsContent<K extends CmsKey>(key: K, value: CmsContent
 
 export async function getSeoRecord(route: string) {
   try {
-    return await db.seoSetting.findUnique({ where: { route } });
+    return await unstable_cache(
+      () => db.seoSetting.findUnique({ where: { route } }),
+      [cacheTags.seoRoute(route)],
+      {
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+        tags: [cacheTags.seo, cacheTags.seoRoute(route)]
+      }
+    )();
   } catch {
     return null;
   }

@@ -104,6 +104,8 @@ model ProductCategory {
   products      Product[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([sortOrder, createdAt])
 }
 
 model Product {
@@ -128,6 +130,10 @@ model Product {
   inquiries        ContactInquiry[]
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+
+  @@index([categoryId])
+  @@index([status, publishedAt, createdAt])
+  @@index([updatedAt])
 }
 
 model ProductMedia {
@@ -140,6 +146,8 @@ model ProductMedia {
   media     Media            @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
   @@unique([productId, mediaId, role])
+  @@index([productId, sortOrder])
+  @@index([mediaId])
 }
 
 model NewsCategory {
@@ -151,6 +159,8 @@ model NewsCategory {
   articles      Article[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([titleMn])
 }
 
 model Article {
@@ -175,6 +185,12 @@ model Article {
   coverImage       Media?        @relation(fields: [coverImageId], references: [id], onDelete: SetNull)
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
+
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([coverImageId])
+  @@index([status, publishedAt, createdAt])
+  @@index([updatedAt])
 }
 
 model Media {
@@ -189,6 +205,10 @@ model Media {
   productMedia   ProductMedia[]
   articleCovers  Article[]
   createdAt      DateTime       @default(now())
+
+  @@index([type, createdAt])
+  @@index([createdAt])
+  @@index([url])
 }
 
 model ContactInquiry {
@@ -204,6 +224,11 @@ model ContactInquiry {
   product     Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+
+  @@index([productId])
+  @@index([status, createdAt])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model SiteSetting {

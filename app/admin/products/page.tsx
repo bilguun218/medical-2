@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
+import { revalidateProductContent } from "@/lib/revalidation";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 
@@ -27,6 +28,7 @@ async function deleteProduct(formData: FormData) {
   if (!id) return;
   await db.product.delete({ where: { id } });
   revalidatePath("/admin/products");
+  revalidateProductContent(id);
 }
 
 export default async function AdminProductsPage() {

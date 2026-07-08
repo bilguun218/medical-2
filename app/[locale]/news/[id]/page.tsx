@@ -1,32 +1,22 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { MotionReveal } from "@/components/site/motion-reveal";
 import { RichText } from "@/components/site/rich-text";
-import { db } from "@/lib/db";
 import { dictionary, getLocale } from "@/lib/i18n";
+import { getPublishedArticle } from "@/lib/public-data";
 import { createMetadata } from "@/lib/seo";
 import { formatDate } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type PageProps = { params: Promise<{ locale: string; id: string }> };
-
-async function getArticle(id: string) {
-  try {
-    return await db.article.findUnique({
-      where: { id },
-      include: { category: true, coverImage: true, author: true }
-    });
-  } catch {
-    return null;
-  }
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale: rawLocale, id } = await params;
   const locale = getLocale(rawLocale);
-  const article = await getArticle(id);
+  const article = await getPublishedArticle(id);
   const title = article ? (locale === "mn" ? article.seoTitleMn || article.titleMn : article.seoTitleEn || article.titleEn || article.titleMn) : dictionary[locale].news.title;
   const description = article
     ? locale === "mn"
@@ -39,7 +29,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function NewsDetailPage({ params }: PageProps) {
   const { locale: rawLocale, id } = await params;
   const locale = getLocale(rawLocale);
-  const article = await getArticle(id);
+  const article = await getPublishedArticle(id);
 
   if (!article || article.status !== "PUBLISHED") {
     notFound();
@@ -59,8 +49,16 @@ export default async function NewsDetailPage({ params }: PageProps) {
           <h1 className="text-balance text-4xl font-bold leading-[1.12] text-primary md:text-5xl">{title}</h1>
         </MotionReveal>
         {article.coverImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={article.coverImage.url} alt={title} className="mt-10 aspect-[16/9] w-full rounded-[1.5rem] object-cover shadow-premium" />
+          <div className="relative mt-10 aspect-[16/9] w-full overflow-hidden rounded-[1.5rem] bg-white shadow-premium">
+            <Image
+              src={article.coverImage.url}
+              alt={locale === "mn" ? article.coverImage.altMn ?? title : article.coverImage.altEn ?? title}
+              fill
+              sizes="(min-width: 1024px) 896px, 100vw"
+              className="object-cover"
+              quality={70}
+            />
+          </div>
         ) : null}
         <RichText html={body} className="mt-10" />
       </article>

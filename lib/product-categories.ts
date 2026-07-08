@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+import { cacheTags, PUBLIC_REVALIDATE_SECONDS } from "@/lib/cache-tags";
 import { productCategories } from "@/content/novytas";
 import { db } from "@/lib/db";
 
@@ -15,9 +17,25 @@ export type ProductCategoryOption = {
 
 export async function getProductCategoryOptions(): Promise<ProductCategoryOption[]> {
   try {
-    const categories = await db.productCategory.findMany({
-      orderBy: { sortOrder: "asc" }
-    });
+    const categories = await unstable_cache(
+      () =>
+        db.productCategory.findMany({
+          select: {
+            id: true,
+            sortOrder: true,
+            titleMn: true,
+            titleEn: true,
+            descriptionMn: true,
+            descriptionEn: true
+          },
+          orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }]
+        }),
+      ["product-category-options"],
+      {
+        revalidate: PUBLIC_REVALIDATE_SECONDS,
+        tags: [cacheTags.productCategories]
+      }
+    )();
 
     if (categories.length > 0) {
       return categories.map((category) => ({

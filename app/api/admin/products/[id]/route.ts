@@ -3,6 +3,7 @@ import { apiError, requireAdminSession } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { saveMediaUpload } from "@/lib/media";
 import { buildProductUpdateData } from "@/lib/product-admin-input";
+import { revalidateMediaContent, revalidateProductContent } from "@/lib/revalidation";
 import { productSchema } from "@/lib/validators";
 
 function getUploadFile(formData: FormData, key: string) {
@@ -92,6 +93,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       await attachProductMedia(id, uploadedPdf, "DATASHEET", currentMediaCount + (uploadedFile ? 1 : 0), parsed.data.titleMn, parsed.data.titleEn);
     }
 
+    revalidateProductContent(id);
+    if (uploadedFile || uploadedPdf) {
+      revalidateMediaContent();
+    }
+
     return NextResponse.json(product);
   } catch (error) {
     return apiError(error);
@@ -103,6 +109,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     await requireAdminSession();
     const { id } = await params;
     await db.product.delete({ where: { id } });
+    revalidateProductContent(id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return apiError(error);

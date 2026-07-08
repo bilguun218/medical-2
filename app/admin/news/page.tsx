@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/lib/db";
+import { revalidateNewsContent } from "@/lib/revalidation";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ async function deleteArticle(formData: FormData) {
   if (!id) return;
   await db.article.delete({ where: { id } });
   revalidatePath("/admin/news");
+  revalidateNewsContent(id);
 }
 
 async function toggleArticleStatus(formData: FormData) {
@@ -42,8 +44,7 @@ async function toggleArticleStatus(formData: FormData) {
     }
   });
   revalidatePath("/admin/news");
-  revalidatePath("/mn/news");
-  revalidatePath("/en/news");
+  revalidateNewsContent(id);
 }
 
 export default async function AdminNewsPage() {

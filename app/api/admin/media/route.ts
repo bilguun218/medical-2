@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { apiError, requireAdminSession } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { saveMediaUpload } from "@/lib/media";
+import { revalidateMediaContent } from "@/lib/revalidation";
 
 export async function GET() {
   try {
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
     });
 
     revalidatePath("/admin/media");
+    revalidateMediaContent();
     return NextResponse.json(media, { status: 201 });
   } catch (error) {
     return apiError(error);

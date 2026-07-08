@@ -7,7 +7,7 @@ import { getCmsContent } from "@/lib/cms";
 import { getLocale, isLocale, locales } from "@/lib/i18n";
 import { organizationJsonLd } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));

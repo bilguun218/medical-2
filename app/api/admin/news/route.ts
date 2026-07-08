@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError, requireAdminSession } from "@/lib/admin";
 import { db } from "@/lib/db";
+import { revalidateNewsContent } from "@/lib/revalidation";
 import { articleSchema } from "@/lib/validators";
 
 export async function GET() {
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
         publishedAt: parsed.data.status === "PUBLISHED" ? parsed.data.publishedAt ? new Date(parsed.data.publishedAt) : new Date() : null
       }
     });
+
+    revalidateNewsContent(article.id);
 
     return NextResponse.json(article, { status: 201 });
   } catch (error) {

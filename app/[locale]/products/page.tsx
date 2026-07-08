@@ -8,70 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SectionHeading } from "@/components/site/section-heading";
 import { tText } from "@/content/novytas";
-import { db } from "@/lib/db";
 import { getSeoRecord } from "@/lib/cms";
 import { dictionary, getLocale } from "@/lib/i18n";
 import { getProductCategoryOptions } from "@/lib/product-categories";
+import { getPublishedProducts } from "@/lib/public-data";
 import { createMetadata } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type PageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ category?: string; q?: string }>;
 };
-
-async function getProducts(categoryId?: string, q?: string) {
-  try {
-    return await db.product.findMany({
-      where: {
-        status: "PUBLISHED",
-        ...(categoryId ? { categoryId } : {}),
-        ...(q
-          ? {
-              OR: [
-                { titleMn: { contains: q, mode: "insensitive" } },
-                { titleEn: { contains: q, mode: "insensitive" } },
-                { summaryMn: { contains: q, mode: "insensitive" } },
-                { summaryEn: { contains: q, mode: "insensitive" } }
-              ]
-            }
-          : {})
-      },
-      select: {
-        id: true,
-        titleMn: true,
-        titleEn: true,
-        summaryMn: true,
-        summaryEn: true,
-        category: {
-          select: {
-            titleMn: true,
-            titleEn: true
-          }
-        },
-        media: {
-          where: { role: "GALLERY" },
-          take: 1,
-          orderBy: { sortOrder: "asc" },
-          select: {
-            media: {
-              select: {
-                url: true,
-                type: true,
-                altMn: true,
-                altEn: true
-              }
-            }
-          }
-        }
-      },
-      orderBy: { publishedAt: "desc" }
-    });
-  } catch {
-    return [];
-  }
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale: rawLocale } = await params;
@@ -92,7 +40,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
   const locale = getLocale(rawLocale);
   const dict = dictionary[locale];
   const [products, categories] = await Promise.all([
-    getProducts(categoryId, q),
+    getPublishedProducts(categoryId, q),
     getProductCategoryOptions()
   ]);
 
@@ -121,7 +69,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
       {products.length > 0 ? (
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product, index) => {
+          {products.map((product) => {
             const title = locale === "mn" ? product.titleMn : product.titleEn || product.titleMn;
             const summary = locale === "mn" ? product.summaryMn : product.summaryEn || product.summaryMn;
             const image = product.media.find((item) => item.media.type === "IMAGE")?.media;
@@ -133,9 +81,9 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
                       src={image.url}
                       alt={locale === "mn" ? image.altMn ?? title : image.altEn ?? title}
                       fill
-                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      sizes="(min-width: 1280px) 389px, (min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
                       className="premium-image object-cover"
-                      priority={index === 0}
+                      quality={70}
                     />
                   ) : (
                     <ImageIcon className="h-10 w-10 text-muted-foreground" />

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Download, FileText, ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -7,30 +8,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ContactForm } from "@/components/forms/contact-form";
 import { MotionReveal } from "@/components/site/motion-reveal";
 import { SectionHeading } from "@/components/site/section-heading";
-import { db } from "@/lib/db";
 import { dictionary, getLocale } from "@/lib/i18n";
+import { getPublishedProduct } from "@/lib/public-data";
 import { productSpecificationRows } from "@/lib/product-specifications";
 import { createMetadata } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 type PageProps = { params: Promise<{ locale: string; id: string }> };
-
-async function getProduct(id: string) {
-  try {
-    return await db.product.findUnique({
-      where: { id },
-      include: { category: true, media: { include: { media: true }, orderBy: { sortOrder: "asc" } } }
-    });
-  } catch {
-    return null;
-  }
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale: rawLocale, id } = await params;
   const locale = getLocale(rawLocale);
-  const product = await getProduct(id);
+  const product = await getPublishedProduct(id);
   const title = product ? (locale === "mn" ? product.seoTitleMn || product.titleMn : product.seoTitleEn || product.titleEn || product.titleMn) : dictionary[locale].products.title;
   const description = product
     ? locale === "mn"
@@ -44,7 +34,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const { locale: rawLocale, id } = await params;
   const locale = getLocale(rawLocale);
   const dict = dictionary[locale];
-  const product = await getProduct(id);
+  const product = await getPublishedProduct(id);
 
   if (!product || product.status !== "PUBLISHED") {
     notFound();
@@ -66,10 +56,16 @@ export default async function ProductDetailPage({ params }: PageProps) {
     <main className="page-reveal premium-container premium-section">
       <div className="grid gap-12 lg:grid-cols-12 lg:items-start">
         <div className="grid gap-4 lg:col-span-5">
-          <div className="group flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[1.5rem] border border-slate-200/70 bg-white shadow-premium">
+          <div className="group relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[1.5rem] border border-slate-200/70 bg-white shadow-premium">
             {images[0] ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={images[0].media.url} alt={title} className="premium-image h-full w-full object-cover" />
+              <Image
+                src={images[0].media.url}
+                alt={locale === "mn" ? images[0].media.altMn ?? title : images[0].media.altEn ?? title}
+                fill
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                className="premium-image object-cover"
+                quality={70}
+              />
             ) : (
               <ImageIcon className="h-12 w-12 text-muted-foreground" />
             )}

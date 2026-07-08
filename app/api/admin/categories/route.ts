@@ -2,13 +2,13 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { apiError, requireAdminSession } from "@/lib/admin";
 import { db } from "@/lib/db";
+import { revalidateProductContent } from "@/lib/revalidation";
 import { productCategorySchema } from "@/lib/validators";
 
 function revalidateCategoryPaths() {
   revalidatePath("/admin/categories");
   revalidatePath("/admin/products");
-  revalidatePath("/mn/products");
-  revalidatePath("/en/products");
+  revalidateProductContent();
 }
 
 export async function GET() {

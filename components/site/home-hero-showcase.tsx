@@ -1,5 +1,3 @@
-"use client";
-
 import { BadgeCheck, CheckCircle2, ShieldCheck, Truck, Wrench } from "lucide-react";
 import Image from "next/image";
 
@@ -16,6 +14,18 @@ const badgeIcons = {
   truck: Truck,
   service: Wrench
 };
+
+function canOptimizeImage(src: string) {
+  if (src.startsWith("/")) {
+    return true;
+  }
+
+  try {
+    return new URL(src).hostname.endsWith(".blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+}
 
 export function HomeHeroShowcase({
   imageSrc,
@@ -54,7 +64,9 @@ export function HomeHeroShowcase({
             width={680}
             height={520}
             priority
-            unoptimized={imageSrc.startsWith("http")}
+            sizes="(min-width: 1024px) 520px, 100vw"
+            quality={70}
+            unoptimized={!canOptimizeImage(imageSrc)}
             className="relative z-10 h-full w-full object-contain drop-shadow-[0_24px_34px_rgba(11,47,85,0.16)]"
           />
         </div>

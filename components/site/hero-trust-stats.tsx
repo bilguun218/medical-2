@@ -1,5 +1,3 @@
-"use client";
-
 import { BadgeCheck, Building2, Globe2, PackageCheck } from "lucide-react";
 
 type StatIcon = "calendar" | "supplier" | "globe" | "products";

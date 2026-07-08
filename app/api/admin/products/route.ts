@@ -3,6 +3,7 @@ import { apiError, requireAdminSession } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { saveMediaUpload } from "@/lib/media";
 import { buildProductCreateData } from "@/lib/product-admin-input";
+import { revalidateMediaContent, revalidateProductContent } from "@/lib/revalidation";
 import { productSchema } from "@/lib/validators";
 
 function getUploadFile(formData: FormData, key: string) {
@@ -86,6 +87,11 @@ export async function POST(request: Request) {
 
     if (uploadedPdf) {
       await attachProductMedia(product.id, uploadedPdf, "DATASHEET", 1, parsed.data.titleMn, parsed.data.titleEn);
+    }
+
+    revalidateProductContent(product.id);
+    if (uploadedFile || uploadedPdf) {
+      revalidateMediaContent();
     }
 
     return NextResponse.json(product, { status: 201 });
