@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, FileText, ImageIcon, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MotionReveal } from "@/components/site/motion-reveal";
 import { SectionHeading } from "@/components/site/section-heading";
 import { tText } from "@/content/novytas";
 import { db } from "@/lib/db";
@@ -38,7 +38,34 @@ async function getProducts(categoryId?: string, q?: string) {
             }
           : {})
       },
-      include: { category: true, media: { include: { media: true }, orderBy: { sortOrder: "asc" } } },
+      select: {
+        id: true,
+        titleMn: true,
+        titleEn: true,
+        summaryMn: true,
+        summaryEn: true,
+        category: {
+          select: {
+            titleMn: true,
+            titleEn: true
+          }
+        },
+        media: {
+          where: { role: "GALLERY" },
+          take: 1,
+          orderBy: { sortOrder: "asc" },
+          select: {
+            media: {
+              select: {
+                url: true,
+                type: true,
+                altMn: true,
+                altEn: true
+              }
+            }
+          }
+        }
+      },
       orderBy: { publishedAt: "desc" }
     });
   } catch {
@@ -71,9 +98,7 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
   return (
     <main className="page-reveal premium-container premium-section">
-      <MotionReveal>
-        <SectionHeading title={dict.products.title} description={dict.products.subtitle} />
-      </MotionReveal>
+      <SectionHeading title={dict.products.title} description={dict.products.subtitle} />
 
       <form className="mt-10 grid gap-3 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-subtle md:grid-cols-[1fr_auto]">
         <div className="relative">
@@ -96,16 +121,22 @@ export default async function ProductsPage({ params, searchParams }: PageProps) 
 
       {products.length > 0 ? (
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => {
+          {products.map((product, index) => {
             const title = locale === "mn" ? product.titleMn : product.titleEn || product.titleMn;
             const summary = locale === "mn" ? product.summaryMn : product.summaryEn || product.summaryMn;
             const image = product.media.find((item) => item.media.type === "IMAGE")?.media;
             return (
               <Card key={product.id} className="premium-card-hover group overflow-hidden">
-                <div className="flex aspect-[4/3] items-center justify-center overflow-hidden bg-white">
+                <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-white">
                   {image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={image.url} alt={locale === "mn" ? image.altMn ?? title : image.altEn ?? title} className="premium-image h-full w-full object-cover" />
+                    <Image
+                      src={image.url}
+                      alt={locale === "mn" ? image.altMn ?? title : image.altEn ?? title}
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      className="premium-image object-cover"
+                      priority={index === 0}
+                    />
                   ) : (
                     <ImageIcon className="h-10 w-10 text-muted-foreground" />
                   )}
