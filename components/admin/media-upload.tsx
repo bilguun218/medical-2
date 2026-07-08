@@ -16,12 +16,14 @@ export function MediaUpload({
   value,
   onChange,
   accept = "image/*",
-  name
+  name,
+  buttonLabel = "Оруулах"
 }: {
   value?: string;
   onChange: (url: string, media?: UploadedMedia) => void;
   accept?: string;
   name?: string;
+  buttonLabel?: string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -91,7 +93,7 @@ export function MediaUpload({
         />
         <Button type="button" variant="outline" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-          Оруулах
+          {buttonLabel}
         </Button>
       </div>
       {message ? <p className="text-xs text-slate-500">{message}</p> : null}

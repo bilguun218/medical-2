@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Check, Contact, ExternalLink, Facebook, FileText, Home, ImageIcon, Instagram, LayoutTemplate, Linkedin, Loader2, Monitor, Plus, Save, Smartphone, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Contact, ExternalLink, Facebook, FileText, Home, ImageIcon, Instagram, LayoutTemplate, Linkedin, List, Loader2, Monitor, MousePointer2, Palette, PencilLine, Plus, Save, Smartphone, Table2, Tags, Trash2, Type, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -333,6 +333,62 @@ function groupForField(field: EditorField) {
   return "Бусад";
 }
 
+function kindLabel(kind: FieldKind) {
+  switch (kind) {
+    case "image":
+      return "Зураг";
+    case "color":
+      return "Өнгө";
+    case "url":
+      return "Холбоос";
+    case "text":
+    case "textarea":
+    case "localized-input":
+    case "localized-textarea":
+    case "localized-richtext":
+      return "Текст";
+    case "history-table":
+      return "Түүх";
+    case "list":
+    case "localized-list":
+    case "section-list":
+    case "nav-list":
+    case "quick-link-list":
+    case "social-link-list":
+      return "Жагсаалт";
+    default:
+      return "Талбар";
+  }
+}
+
+function kindIcon(kind: FieldKind) {
+  switch (kind) {
+    case "image":
+      return ImageIcon;
+    case "color":
+      return Palette;
+    case "history-table":
+      return Table2;
+    case "list":
+    case "localized-list":
+    case "section-list":
+    case "nav-list":
+    case "quick-link-list":
+    case "social-link-list":
+      return List;
+    case "url":
+      return ExternalLink;
+    case "text":
+    case "textarea":
+    case "localized-input":
+    case "localized-textarea":
+    case "localized-richtext":
+      return Type;
+    default:
+      return PencilLine;
+  }
+}
+
 function moveItem<T>(items: T[], index: number, direction: -1 | 1) {
   const nextIndex = index + direction;
 
@@ -389,6 +445,7 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
   }, [visibleFields]);
   const activeField = fields.find((field) => field.id === activeFieldId) ?? visibleFields[0] ?? fields[0];
   const activeValue = getAtPath(content[activeField.key], activeField.path);
+  const ActiveFieldIcon = kindIcon(activeField.kind);
 
   useEffect(() => {
     if (!visibleFields.some((field) => field.id === activeFieldId)) {
@@ -452,19 +509,30 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
     className?: string;
     style?: React.CSSProperties;
   }) {
+    const field = fields.find((item) => item.id === fieldId);
     const selected = activeFieldId === fieldId;
+    const FieldIcon = field ? kindIcon(field.kind) : PencilLine;
 
     return (
       <button
         type="button"
         onClick={() => selectField(fieldId)}
         className={cn(
-          "block w-full min-w-0 rounded-lg border border-transparent p-2 text-left transition hover:border-medical/35 hover:bg-medical/[0.04]",
+          "group/editor relative block w-full min-w-0 rounded-lg border border-transparent p-2 text-left transition hover:border-medical/35 hover:bg-medical/[0.04]",
           selected && "border-medical bg-medical/[0.07] shadow-[0_0_0_3px_rgba(23,105,209,0.10)]",
           className
         )}
         style={style}
       >
+        <span
+          className={cn(
+            "pointer-events-none absolute left-2 top-2 z-20 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-md bg-primary px-2 py-1 text-[10px] font-bold uppercase text-white opacity-0 shadow-sm transition group-hover/editor:opacity-100 group-focus-visible/editor:opacity-100",
+            selected && "opacity-100"
+          )}
+        >
+          <FieldIcon className="h-3 w-3 shrink-0" />
+          <span className="truncate">{field ? `${kindLabel(field.kind)} · ${field.label}` : "Засах"}</span>
+        </span>
         {children}
       </button>
     );
@@ -511,7 +579,7 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
           <CardHeader className="gap-3 p-4 sm:p-6 md:flex md:flex-row md:items-center md:justify-between">
             <div>
               <CardTitle>Visual page editor</CardTitle>
-              <p className="mt-1 text-sm text-slate-500">Canvas дээр дарж эсвэл доорх талбараас сонгоод detail бүрийг засна.</p>
+              <p className="mt-1 text-sm text-slate-500">Canvas дээрх tag-тай хэсэг дээр дарвал зөв засварын panel нээгдэнэ.</p>
             </div>
             <div className="grid grid-cols-4 gap-2 sm:flex sm:flex-wrap">
               <Button type="button" variant={locale === "mn" ? "default" : "outline"} size="sm" onClick={() => setLocale("mn")}>
@@ -545,36 +613,45 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
               ))}
             </div>
             <div className="rounded-xl border bg-slate-50 p-3">
-              <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-slate-800">Нарийн талбарууд</p>
-                  <p className="text-xs text-slate-500">{visibleFields.length} талбар засах боломжтой</p>
+                  <p className="text-sm font-semibold text-slate-800">Сонгосон хэсэг</p>
+                  <p className="text-xs text-slate-500">{activeField.label}</p>
                 </div>
-                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500">{activeField.label}</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-500">
+                  <ActiveFieldIcon className="h-3.5 w-3.5" />
+                  {kindLabel(activeField.kind)}
+                </span>
               </div>
-              <div className="grid max-h-64 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 lg:max-h-none lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
-                {groupedVisibleFields.map((group) => (
-                  <div key={group.label} className="min-w-0 rounded-lg border bg-white p-2">
-                    <p className="mb-2 truncate text-xs font-semibold uppercase text-slate-400">{group.label}</p>
-                    <div className="grid gap-1.5">
-                      {group.items.map((field) => (
-                        <button
-                          key={field.id}
-                          type="button"
-                          onClick={() => setActiveFieldId(field.id)}
-                          className={cn(
-                            "min-w-0 rounded-md border px-2.5 py-2 text-left text-xs transition hover:border-medical/40 hover:bg-medical/[0.04]",
-                            activeFieldId === field.id ? "border-medical bg-medical/[0.08] text-primary" : "border-slate-100 text-slate-600"
-                          )}
-                        >
-                          <span className="block truncate font-semibold">{field.label}</span>
-                          <span className="mt-0.5 block truncate text-[11px] text-slate-400">{field.id.replace(`${field.key}.`, "")}</span>
-                        </button>
-                      ))}
+              <details className="mt-3 rounded-lg border bg-white">
+                <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600">
+                  <Tags className="h-4 w-4 text-medical" />
+                  Бүх талбараас сонгох
+                </summary>
+                <div className="grid max-h-64 gap-3 overflow-y-auto border-t p-3 pr-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+                  {groupedVisibleFields.map((group) => (
+                    <div key={group.label} className="min-w-0 rounded-lg border bg-white p-2">
+                      <p className="mb-2 truncate text-xs font-semibold uppercase text-slate-400">{group.label}</p>
+                      <div className="grid gap-1.5">
+                        {group.items.map((field) => (
+                          <button
+                            key={field.id}
+                            type="button"
+                            onClick={() => setActiveFieldId(field.id)}
+                            className={cn(
+                              "min-w-0 rounded-md border px-2.5 py-2 text-left text-xs transition hover:border-medical/40 hover:bg-medical/[0.04]",
+                              activeFieldId === field.id ? "border-medical bg-medical/[0.08] text-primary" : "border-slate-100 text-slate-600"
+                            )}
+                          >
+                            <span className="block truncate font-semibold">{field.label}</span>
+                            <span className="mt-0.5 block truncate text-[11px] text-slate-400">{field.id.replace(`${field.key}.`, "")}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </details>
             </div>
           </CardContent>
         </Card>
@@ -935,10 +1012,17 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
         <Card className="overflow-hidden xl:flex xl:max-h-[calc(100dvh-3rem)] xl:flex-col">
           <CardHeader className="shrink-0">
             <CardTitle className="flex items-center gap-2">
-              <Check className="h-5 w-5 text-teal" />
+              <ActiveFieldIcon className="h-5 w-5 text-teal" />
               {activeField.label}
             </CardTitle>
-            <p className="text-xs font-semibold uppercase text-slate-400">{activeField.key}</p>
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                <MousePointer2 className="h-3.5 w-3.5" />
+                Canvas-аас сонгосон
+              </span>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{kindLabel(activeField.kind)}</span>
+            </div>
+            <p className="text-xs font-semibold uppercase text-slate-400">{activeField.id}</p>
           </CardHeader>
           <CardContent className="grid gap-4 overflow-y-auto overscroll-contain xl:min-h-0 xl:flex-1">
             {activeField.kind.startsWith("localized") && isLocalizedValue(activeValue) ? (
@@ -1325,14 +1409,29 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
             ) : null}
 
             {activeField.kind === "image" ? (
-              <div className="grid gap-3">
-                <Label>Зураг</Label>
-                <MediaUpload value={String(activeValue ?? "")} onChange={(url) => updateField(activeField, url)} />
-                <Input value={String(activeValue ?? "")} onChange={(event) => updateField(activeField, event.target.value)} placeholder="/uploads/image.jpg эсвэл https://..." />
-                <Button type="button" variant="outline" size="sm" onClick={() => updateField(activeField, "")}>
-                  <Trash2 className="h-4 w-4" />
-                  Зураг цэвэрлэх
-                </Button>
+              <div className="grid gap-4">
+                <div className="rounded-xl border bg-slate-50 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Зураг сонгогдсон</p>
+                      <p className="text-xs text-slate-500">Солих, URL өөрчлөх эсвэл арилгах боломжтой.</p>
+                    </div>
+                    {String(activeValue ?? "") ? (
+                      <Button type="button" variant="outline" size="sm" onClick={() => updateField(activeField, "")}>
+                        <Trash2 className="h-4 w-4" />
+                        Арилгах
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Зураг солих</Label>
+                  <MediaUpload value={String(activeValue ?? "")} onChange={(url) => updateField(activeField, url)} buttonLabel={String(activeValue ?? "") ? "Солих" : "Оруулах"} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Зургийн URL</Label>
+                  <Input value={String(activeValue ?? "")} onChange={(event) => updateField(activeField, event.target.value)} placeholder="/uploads/image.jpg эсвэл https://..." />
+                </div>
               </div>
             ) : null}
 

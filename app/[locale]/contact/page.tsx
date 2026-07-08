@@ -89,6 +89,25 @@ export default async function ContactPage({ params }: PageProps) {
       <div className="mt-12 grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="min-w-0">
           <ContactMap locale={locale} mapInput={content.googleMapsEmbedUrl} fallbackLocation={address} showLabel={false} />
+          <div className="mt-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{locale === "mn" ? "Сошиал холбоос" : "Social links"}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {socialLinks.map((link) => {
+                const Icon = link.icon;
+                const className = "inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-primary shadow-sm transition hover:border-teal/40 hover:text-teal";
+
+                return link.href ? (
+                  <a key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={link.label} title={link.label} className={className}>
+                    <Icon className="h-4 w-4" />
+                  </a>
+                ) : (
+                  <span key={link.label} aria-label={link.label} aria-disabled="true" title={`${link.label} холбоос оруулаагүй`} className={`${className} cursor-default opacity-55 hover:border-slate-200/80 hover:text-primary`}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <Card className="shadow-premium" style={cardStyle}>
@@ -98,30 +117,6 @@ export default async function ContactPage({ params }: PageProps) {
           </CardHeader>
           <div className="px-6 pb-6">
             <ContactForm locale={locale} submitLabel={dict.actions.sendInquiry} />
-            <div className="mt-6 border-t border-slate-200/70 pt-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{locale === "mn" ? "Сошиал холбоос" : "Social links"}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {socialLinks.map((link) => {
-                  const Icon = link.icon;
-                  const className = "inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-primary shadow-sm transition hover:border-teal/40 hover:text-teal";
-
-                  return link.href ? (
-                    <a key={link.label} href={link.href} target="_blank" rel="noreferrer" aria-label={link.label} title={link.label} className={className}>
-                      <Icon className="h-4 w-4" />
-                    </a>
-                  ) : (
-                    <span key={link.label} aria-label={link.label} aria-disabled="true" title={`${link.label} холбоос оруулаагүй`} className={`${className} cursor-default opacity-55 hover:border-slate-200/80 hover:text-primary`}>
-                      <Icon className="h-4 w-4" />
-                    </span>
-                  );
-                })}
-                {socialLinks.every((link) => !link.href) ? (
-                  <span className="inline-flex h-10 items-center rounded-xl bg-slate-50 px-3 text-xs font-medium text-slate-500">
-                    {locale === "mn" ? "Admin дээр link оруулна" : "Add links in admin"}
-                  </span>
-                ) : null}
-              </div>
-            </div>
           </div>
         </Card>
       </div>
