@@ -138,7 +138,7 @@ const companyAddress = text(
   "Sukhbaatar District, 73/6-42, Ulaanbaatar, Mongolia"
 );
 const contactPerson = text("Ц. Номин-Эрдэнэ, Гүйцэтгэх захирал", "Ts. Nomin-Erdene, Chief Executive Officer");
-const websiteUrl = "https://www.novytas.mn";
+const websiteUrl = "https://novytasllc.com";
 const defaultStyle = {
   backgroundColor: "",
   foregroundColor: "",
@@ -293,11 +293,40 @@ function settingKey(key: CmsKey) {
   return `cms:${key}`;
 }
 
+function normalizeFooterSocialLinks(items: FooterContent["socialLinks"]) {
+  const next = [...items];
+
+  for (const defaultItem of defaultFooterSocialLinks) {
+    const exists = next.some((item) => item.label.trim().toLowerCase() === defaultItem.label.toLowerCase());
+
+    if (!exists) {
+      next.push({ ...defaultItem, order: next.length });
+    }
+  }
+
+  return next
+    .sort((a, b) => a.order - b.order)
+    .map((item, order) => ({
+      ...item,
+      order
+    }));
+}
+
 export async function getCmsContent<K extends CmsKey>(key: K): Promise<CmsContentMap[K]> {
   try {
     const setting = await db.siteSetting.findUnique({ where: { key: settingKey(key) } });
     const merged = mergeDefaults(cmsDefaults[key], setting?.value);
-    return cmsSchemas[key].parse(merged) as CmsContentMap[K];
+    const parsed = cmsSchemas[key].parse(merged) as CmsContentMap[K];
+
+    if (key === "footer") {
+      const footer = parsed as FooterContent;
+      return {
+        ...footer,
+        socialLinks: normalizeFooterSocialLinks(footer.socialLinks)
+      } as CmsContentMap[K];
+    }
+
+    return parsed;
   } catch {
     return cmsDefaults[key];
   }

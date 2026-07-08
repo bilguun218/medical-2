@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Check, Contact, FileText, Home, ImageIcon, LayoutTemplate, Loader2, Monitor, Plus, Save, Smartphone, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Contact, ExternalLink, Facebook, FileText, Home, ImageIcon, Instagram, LayoutTemplate, Linkedin, Loader2, Monitor, Plus, Save, Smartphone, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,15 @@ const defaultFooterSocialLinks: SocialValue[] = [
   { label: "Instagram", href: "", order: 1, visible: true },
   { label: "LinkedIn", href: "", order: 2, visible: true }
 ];
+
+function getSocialIcon(label: string) {
+  const normalized = label.toLowerCase();
+
+  if (normalized.includes("facebook")) return Facebook;
+  if (normalized.includes("instagram")) return Instagram;
+  if (normalized.includes("linkedin")) return Linkedin;
+  return ExternalLink;
+}
 
 type EditorField = {
   id: string;
@@ -901,11 +910,15 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                   </EditableBlock>
                   <EditableBlock fieldId="footer.socialLinks" className="mt-4 text-white">
                     <div className="flex flex-wrap gap-2">
-                      {footer.socialLinks.filter((item) => item.visible).map((item, index) => (
-                        <span key={`${item.label}-${index}`} className="rounded-lg bg-white/10 px-3 py-1 text-xs font-semibold">
-                          {item.label || "Social"}
-                        </span>
-                      ))}
+                      {footer.socialLinks.filter((item) => item.visible).map((item, index) => {
+                        const Icon = getSocialIcon(item.label);
+
+                        return (
+                          <span key={`${item.label}-${index}`} title={item.label || "Social"} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white">
+                            <Icon className="h-4 w-4" />
+                          </span>
+                        );
+                      })}
                     </div>
                   </EditableBlock>
                   <EditableBlock fieldId="footer.copyright" className="mt-4 text-white">

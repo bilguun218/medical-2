@@ -14,6 +14,15 @@ function getSocialIcon(label: string) {
   return ExternalLink;
 }
 
+function getContactSocialHref(label: string, contact: { facebook: string; instagram: string; linkedin: string }) {
+  const normalized = label.toLowerCase();
+
+  if (normalized.includes("facebook")) return contact.facebook;
+  if (normalized.includes("instagram")) return contact.instagram;
+  if (normalized.includes("linkedin")) return contact.linkedin;
+  return "";
+}
+
 function externalHref(value: string) {
   const href = value.trim();
 
@@ -44,8 +53,8 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
   if (address) contactText.push({ label: address, icon: MapPin });
   if (contactPerson) contactText.push({ label: contactPerson, icon: UserRound });
   const socialLinks = footer.socialLinks
-    .map((item) => ({ ...item, href: externalHref(item.href) }))
-    .filter((item) => item.visible && item.href && item.href !== websiteHref)
+    .map((item) => ({ ...item, href: externalHref(item.href || getContactSocialHref(item.label, contact)) }))
+    .filter((item) => item.visible && (!item.href || item.href !== websiteHref))
     .sort((a, b) => a.order - b.order);
   const footerStyle = {
     backgroundColor: footer.style.backgroundColor || undefined,
@@ -77,8 +86,9 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
             <div className="mt-6 flex flex-wrap gap-2">
               {socialLinks.map((link) => {
                 const Icon = getSocialIcon(link.label);
+                const className = "flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-slate-200 transition hover:border-teal/40 hover:bg-white/[0.12] hover:text-white";
 
-                return (
+                return link.href ? (
                   <a
                     key={`${link.label}-${link.order}`}
                     href={link.href}
@@ -86,10 +96,20 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
                     rel="noreferrer"
                     aria-label={link.label}
                     title={link.label}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-slate-200 transition hover:border-teal/40 hover:bg-white/[0.12] hover:text-white"
+                    className={className}
                   >
                     <Icon className="h-4 w-4" />
                   </a>
+                ) : (
+                  <span
+                    key={`${link.label}-${link.order}`}
+                    aria-label={link.label}
+                    aria-disabled="true"
+                    title={`${link.label} холбоос оруулаагүй`}
+                    className={`${className} cursor-default opacity-70 hover:border-white/10 hover:bg-white/[0.06] hover:text-slate-200`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
                 );
               })}
             </div>

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import type { HeaderContent } from "@/lib/cms";
 import type { Locale } from "@/lib/i18n";
 import { dictionary, otherLocale } from "@/lib/i18n";
@@ -20,8 +20,6 @@ function withLocale(href: string, locale: Locale) {
 
 export function SiteHeader({ locale, content }: { locale: Locale; content: HeaderContent }) {
   const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const scrolledRef = useRef(false);
   const pathname = usePathname();
   const dict = dictionary[locale];
   const alternate = otherLocale(locale);
@@ -38,42 +36,11 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: Heade
     backgroundColor: content.style.accentColor || undefined
   };
 
-  useEffect(() => {
-    let frame = 0;
-
-    function applyScrolledState() {
-      frame = 0;
-      const nextScrolled = window.scrollY > 8;
-
-      if (scrolledRef.current !== nextScrolled) {
-        scrolledRef.current = nextScrolled;
-        setScrolled(nextScrolled);
-      }
-    }
-
-    function onScroll() {
-      if (frame) return;
-      frame = window.requestAnimationFrame(applyScrolledState);
-    }
-
-    applyScrolledState();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      if (frame) {
-        window.cancelAnimationFrame(frame);
-      }
-
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, []);
-
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 transition duration-300 ease-out",
-        scrolled || open
-          ? "border-b border-slate-200/70 bg-white/88 shadow-[0_12px_35px_rgba(11,47,85,0.06)] backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/88"
-          : "border-b border-transparent bg-transparent"
+        "sticky top-0 z-40 border-b border-slate-200/80 bg-white shadow-[0_10px_30px_rgba(11,47,85,0.05)] transition duration-300 ease-out dark:border-slate-800/80 dark:bg-slate-950",
+        open && "shadow-[0_16px_38px_rgba(11,47,85,0.08)]"
       )}
       style={headerStyle}
     >
@@ -126,7 +93,7 @@ export function SiteHeader({ locale, content }: { locale: Locale; content: Heade
       </div>
 
       {open ? (
-        <div className="border-t bg-white/96 backdrop-blur-xl lg:hidden dark:border-slate-800/80 dark:bg-slate-950/96">
+        <div className="border-t bg-white lg:hidden dark:border-slate-800/80 dark:bg-slate-950">
           <nav className="mx-auto grid w-full max-w-7xl gap-1 px-4 py-4" aria-label="Mobile navigation">
             {navItems.map((item) => (
               <Link
