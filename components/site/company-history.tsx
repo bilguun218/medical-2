@@ -80,27 +80,23 @@ export function CompanyHistory({ html, locale }: { html: string; locale: Locale 
       <div className="pointer-events-none absolute -bottom-20 left-8 h-44 w-44 rounded-full bg-medical/10 blur-3xl" />
 
       <div className="relative">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex min-w-0 gap-3">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-subtle">
-              <Building2 className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-safe text-xs font-semibold uppercase tracking-[0.08em] text-teal">{eyebrow}</p>
-              <h3 className="text-safe mt-2 text-xl font-semibold leading-tight text-primary">{nameItem?.value ?? "NOVYTAS LLC"}</h3>
-            </div>
-          </div>
-          <div className="w-fit rounded-2xl border border-medical/15 bg-medical/[0.07] px-4 py-3 text-medical">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em]">{establishedItem?.label ?? (locale === "mn" ? "Байгуулагдсан" : "Established")}</p>
-            <p className="mt-1 text-2xl font-bold leading-none">{year}</p>
+        <div className="flex min-w-0 gap-3">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-subtle">
+            <Building2 className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-safe text-xs font-semibold uppercase tracking-[0.08em] text-teal">{eyebrow}</p>
+            <h3 className="text-safe mt-2 text-xl font-semibold leading-tight text-primary">{nameItem?.value ?? "NOVYTAS LLC"}</h3>
           </div>
         </div>
 
         <div className="mt-7 grid gap-5 lg:grid-cols-[0.86fr_1.14fr]">
           <div className="rounded-2xl bg-primary p-5 text-white shadow-premium">
             <CalendarDays className="h-6 w-6 text-teal" />
-            <p className="mt-5 text-safe text-4xl font-bold leading-none">{year}</p>
-            <p className="mt-2 text-safe text-sm font-semibold text-white/80">{establishedItem?.value ?? (locale === "mn" ? "Байгуулагдсан" : "Established")}</p>
+            <div className="mt-5">
+              <p className="text-safe text-xs font-semibold uppercase tracking-[0.08em] text-white/70">{establishedItem?.label ?? (locale === "mn" ? "Байгуулагдсан" : "Established")}</p>
+              <p className="mt-2 text-safe text-4xl font-bold leading-none">{year}</p>
+            </div>
             <p className="mt-5 text-safe text-sm leading-6 text-white/70">{intro}</p>
           </div>
 

@@ -35,15 +35,23 @@ type FieldKind =
   | "list"
   | "localized-list"
   | "section-list"
+  | "history-table"
   | "nav-list"
   | "quick-link-list"
   | "social-link-list"
   | "color";
 type LocalizedValue = { mn: string; en: string };
 type SectionValue = { title: LocalizedValue; body: LocalizedValue };
+type HistoryRow = { label: string; value: string };
 type NavValue = { key: string; label: LocalizedValue; href: string; order: number; visible: boolean };
 type LinkValue = { label: LocalizedValue; href: string; order: number; visible: boolean };
 type SocialValue = { label: string; href: string; order: number; visible: boolean };
+
+const defaultFooterSocialLinks: SocialValue[] = [
+  { label: "Facebook", href: "", order: 0, visible: true },
+  { label: "Instagram", href: "", order: 1, visible: true },
+  { label: "LinkedIn", href: "", order: 2, visible: true }
+];
 
 type EditorField = {
   id: string;
@@ -62,14 +70,15 @@ const pages: Array<{ key: PageKey; label: string; icon: typeof Home }> = [
 ];
 
 const fields: EditorField[] = [
-  { id: "home.style.backgroundColor", page: "home", key: "home", path: ["style", "backgroundColor"], label: "Нүүр background", kind: "color" },
-  { id: "home.style.surfaceColor", page: "home", key: "home", path: ["style", "surfaceColor"], label: "Нүүр hero background", kind: "color" },
-  { id: "home.style.accentColor", page: "home", key: "home", path: ["style", "accentColor"], label: "Нүүр accent/CTA өнгө", kind: "color" },
+  { id: "home.style.backgroundColor", page: "home", key: "home", path: ["style", "backgroundColor"], label: "Нүүрийн үндсэн цайвар фон", kind: "color" },
+  { id: "home.style.surfaceColor", page: "home", key: "home", path: ["style", "surfaceColor"], label: "Нүүрийн fallback фон", kind: "color" },
+  { id: "home.style.accentColor", page: "home", key: "home", path: ["style", "accentColor"], label: "Нүүрийн онцлох/товчны өнгө", kind: "color" },
   { id: "home.heroTitle", page: "home", key: "home", path: ["heroTitle"], label: "Баннерын гарчиг", kind: "localized-input" },
   { id: "home.heroSubtitle", page: "home", key: "home", path: ["heroSubtitle"], label: "Баннерын дэд гарчиг", kind: "localized-input" },
   { id: "home.heroDescription", page: "home", key: "home", path: ["heroDescription"], label: "Баннерын тайлбар", kind: "localized-textarea" },
   { id: "home.heroImage", page: "home", key: "home", path: ["heroImage"], label: "Баннерын зураг", kind: "image" },
-  { id: "home.heroBackgroundImage", page: "home", key: "home", path: ["heroBackgroundImage"], label: "Баннерын арын зураг", kind: "image" },
+  { id: "home.introTitle", page: "home", key: "home", path: ["introTitle"], label: "Танилцуулгын гарчиг", kind: "localized-input" },
+  { id: "home.introDescription", page: "home", key: "home", path: ["introDescription"], label: "Танилцуулгын тайлбар", kind: "localized-textarea" },
   { id: "home.primaryButtonText", page: "home", key: "home", path: ["primaryButtonText"], label: "Үндсэн товчны текст", kind: "localized-input" },
   { id: "home.primaryButtonLink", page: "home", key: "home", path: ["primaryButtonLink"], label: "Үндсэн товчны холбоос", kind: "url" },
   { id: "home.secondaryButtonText", page: "home", key: "home", path: ["secondaryButtonText"], label: "Хоёрдогч товчны текст", kind: "localized-input" },
@@ -78,10 +87,10 @@ const fields: EditorField[] = [
   { id: "home.operationsDescription", page: "home", key: "home", path: ["operationsDescription"], label: "Үйл ажиллагааны тайлбар", kind: "localized-textarea" },
   { id: "home.whyTitle", page: "home", key: "home", path: ["whyTitle"], label: "Яагаад сонгох гарчиг", kind: "localized-input" },
   { id: "home.whyDescription", page: "home", key: "home", path: ["whyDescription"], label: "Яагаад сонгох тайлбар", kind: "localized-textarea" },
-  { id: "home.contactTitle", page: "home", key: "home", path: ["contactTitle"], label: "CTA гарчиг", kind: "localized-input" },
-  { id: "home.contactDescription", page: "home", key: "home", path: ["contactDescription"], label: "CTA тайлбар", kind: "localized-textarea" },
-  { id: "home.contactButtonText", page: "home", key: "home", path: ["contactButtonText"], label: "CTA товчны текст", kind: "localized-input" },
-  { id: "home.contactButtonLink", page: "home", key: "home", path: ["contactButtonLink"], label: "CTA товчны холбоос", kind: "url" },
+  { id: "home.contactTitle", page: "home", key: "home", path: ["contactTitle"], label: "Холбоо барих хэсгийн гарчиг", kind: "localized-input" },
+  { id: "home.contactDescription", page: "home", key: "home", path: ["contactDescription"], label: "Холбоо барих хэсгийн тайлбар", kind: "localized-textarea" },
+  { id: "home.contactButtonText", page: "home", key: "home", path: ["contactButtonText"], label: "Холбоо барих товчны текст", kind: "localized-input" },
+  { id: "home.contactButtonLink", page: "home", key: "home", path: ["contactButtonLink"], label: "Холбоо барих товчны холбоос", kind: "url" },
 
   { id: "about.style.backgroundColor", page: "about", key: "about", path: ["style", "backgroundColor"], label: "About background", kind: "color" },
   { id: "about.style.surfaceColor", page: "about", key: "about", path: ["style", "surfaceColor"], label: "About section background", kind: "color" },
@@ -94,7 +103,7 @@ const fields: EditorField[] = [
   { id: "about.mission", page: "about", key: "about", path: ["mission"], label: "Эрхэм зорилго", kind: "localized-textarea" },
   { id: "about.vision", page: "about", key: "about", path: ["vision"], label: "Алсын хараа", kind: "localized-textarea" },
   { id: "about.values", page: "about", key: "about", path: ["values"], label: "Үнэт зүйлс", kind: "localized-list" },
-  { id: "about.companyHistory", page: "about", key: "about", path: ["companyHistory"], label: "Компанийн түүх", kind: "localized-richtext" },
+  { id: "about.companyHistory", page: "about", key: "about", path: ["companyHistory"], label: "Компанийн түүх, мэдээлэл", kind: "history-table" },
   { id: "about.ceoMessage", page: "about", key: "about", path: ["ceoMessage"], label: "CEO мэндчилгээ", kind: "localized-richtext" },
   { id: "about.heroImage", page: "about", key: "about", path: ["heroImage"], label: "Зураг 1", kind: "image" },
   { id: "about.secondaryImage", page: "about", key: "about", path: ["secondaryImage"], label: "Зураг 2", kind: "image" },
@@ -137,7 +146,7 @@ const fields: EditorField[] = [
   { id: "footer.contactHeading", page: "chrome", key: "footer", path: ["contactHeading"], label: "Footer contact heading", kind: "localized-input" },
   { id: "footer.quickLinksHeading", page: "chrome", key: "footer", path: ["quickLinksHeading"], label: "Footer links heading", kind: "localized-input" },
   { id: "footer.quickLinks", page: "chrome", key: "footer", path: ["quickLinks"], label: "Footer quick links", kind: "quick-link-list" },
-  { id: "footer.socialLinks", page: "chrome", key: "footer", path: ["socialLinks"], label: "Footer social links", kind: "social-link-list" }
+  { id: "footer.socialLinks", page: "chrome", key: "footer", path: ["socialLinks"], label: "Footer сошиал холбоосууд", kind: "social-link-list" }
 ];
 
 function isLocalizedValue(value: unknown): value is LocalizedValue {
@@ -176,9 +185,85 @@ function stripHtml(value: string) {
   return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function decodeHtmlEntities(value: string) {
+  return value
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'");
+}
+
+function cleanHistoryCell(value: string) {
+  return decodeHtmlEntities(
+    value
+      .replace(/<br\s*\/?>/gi, " ")
+      .replace(/<[^>]*>/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+
+function historyRowsFromHtml(html: string): HistoryRow[] {
+  const rows = [...html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)];
+
+  return rows
+    .map((row) => {
+      const cells = [...row[1].matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)].map((cell) => cleanHistoryCell(cell[1]));
+
+      if (cells.length < 2) {
+        return null;
+      }
+
+      return { label: cells[0] ?? "", value: cells.slice(1).join(" ") };
+    })
+    .filter((item): item is HistoryRow => Boolean(item));
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function historyRowsToHtml(rows: HistoryRow[]) {
+  const validRows = rows.filter((row) => row.label.trim() || row.value.trim());
+
+  if (validRows.length === 0) {
+    return "";
+  }
+
+  return `<table><tbody>${validRows.map((row) => `<tr><th>${escapeHtml(row.label.trim())}</th><td>${escapeHtml(row.value.trim())}</td></tr>`).join("")}</tbody></table>`;
+}
+
 function contentStyle(style: { backgroundColor?: string; foregroundColor?: string; surfaceColor?: string; accentColor?: string }) {
   return {
     backgroundColor: style.backgroundColor || undefined,
+    color: style.foregroundColor || undefined
+  };
+}
+
+function themeBackgroundColor(value?: string) {
+  const color = String(value || "").trim().toLowerCase();
+
+  if (!/^#[0-9a-f]{6}$/i.test(color) || color === "#ffffff") {
+    return "";
+  }
+
+  return color;
+}
+
+function homeContentStyle(style: { backgroundColor?: string; foregroundColor?: string; surfaceColor?: string; accentColor?: string }) {
+  const base = themeBackgroundColor(style.backgroundColor) || themeBackgroundColor(style.surfaceColor) || "#f3f9ff";
+
+  return {
+    backgroundColor: base,
+    backgroundImage: "radial-gradient(circle at top left, rgba(31, 122, 224, 0.11), transparent 34rem), radial-gradient(circle at top right, rgba(20, 184, 166, 0.08), transparent 28rem), linear-gradient(180deg, transparent 0%, #f8fbff 44rem, #f2f8ff 100%)",
     color: style.foregroundColor || undefined
   };
 }
@@ -211,7 +296,7 @@ function groupForField(field: EditorField) {
     if (id.includes("intro")) return "Танилцуулга";
     if (id.includes("operations")) return "Үйл ажиллагаа";
     if (id.includes("why")) return "Яагаад сонгох";
-    if (id.includes("contact")) return "CTA холбоо барих";
+    if (id.includes("contact")) return "Холбоо барих хэсэг";
   }
 
   if (field.page === "about") {
@@ -251,9 +336,29 @@ function moveItem<T>(items: T[], index: number, direction: -1 | 1) {
   return copy;
 }
 
+function normalizeFooterSocialLinks(items: SocialValue[]) {
+  const next = [...items];
+
+  for (const defaultItem of defaultFooterSocialLinks) {
+    const exists = next.some((item) => item.label.toLowerCase() === defaultItem.label.toLowerCase());
+
+    if (!exists) {
+      next.push({ ...defaultItem, order: next.length });
+    }
+  }
+
+  return next.sort((a, b) => a.order - b.order).map((item, order) => ({ ...item, order }));
+}
+
 export function VisualContentEditor({ initialValue }: { initialValue: VisualContent }) {
   const router = useRouter();
-  const [content, setContent] = useState(initialValue);
+  const [content, setContent] = useState<VisualContent>(() => ({
+    ...initialValue,
+    footer: {
+      ...initialValue.footer,
+      socialLinks: normalizeFooterSocialLinks(initialValue.footer.socialLinks)
+    }
+  }));
   const [activePage, setActivePage] = useState<PageKey>("home");
   const [activeFieldId, setActiveFieldId] = useState(fields[0].id);
   const [locale, setLocale] = useState<Locale>("mn");
@@ -289,6 +394,17 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
     }));
     setDirtyKeys((current) => new Set(current).add(field.key));
     setMessage(null);
+  }
+
+  function selectField(fieldId: string) {
+    const field = fields.find((item) => item.id === fieldId);
+
+    if (!field) {
+      return;
+    }
+
+    setActivePage(field.page);
+    setActiveFieldId(field.id);
   }
 
   async function saveAll() {
@@ -332,7 +448,7 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
     return (
       <button
         type="button"
-        onClick={() => setActiveFieldId(fieldId)}
+        onClick={() => selectField(fieldId)}
         className={cn(
           "block w-full min-w-0 rounded-lg border border-transparent p-2 text-left transition hover:border-medical/35 hover:bg-medical/[0.04]",
           selected && "border-medical bg-medical/[0.07] shadow-[0_0_0_3px_rgba(23,105,209,0.10)]",
@@ -369,9 +485,10 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
   const canvasGap = isMobilePreview ? "gap-5" : "gap-8";
   const heroTitleClass = isMobilePreview ? "text-2xl" : "text-4xl";
   const sectionTitleClass = isMobilePreview ? "text-xl" : "text-2xl";
+  const aboutHistoryRows = historyRowsFromHtml(textValue(about.companyHistory, locale));
   const activeCanvasStyle =
     activePage === "home"
-      ? contentStyle(home.style)
+      ? homeContentStyle(home.style)
       : activePage === "about"
         ? contentStyle(about.style)
         : activePage === "contact"
@@ -470,20 +587,20 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
               <div className={cn("grid", canvasGap, canvasPadding)}>
                 <div className="grid gap-2 rounded-xl border bg-white/70 p-3 sm:grid-cols-3">
                   <EditableBlock fieldId="home.style.backgroundColor">
-                    <p className="text-xs font-semibold text-slate-500">Page background</p>
+                    <p className="text-xs font-semibold text-slate-500">Үндсэн цайвар фон</p>
                     <p className="mt-1 truncate text-sm font-semibold text-primary">{home.style.backgroundColor || "Default"}</p>
                   </EditableBlock>
                   <EditableBlock fieldId="home.style.surfaceColor">
-                    <p className="text-xs font-semibold text-slate-500">Hero background</p>
+                    <p className="text-xs font-semibold text-slate-500">Fallback фон</p>
                     <p className="mt-1 truncate text-sm font-semibold text-primary">{home.style.surfaceColor || "Default"}</p>
                   </EditableBlock>
                   <EditableBlock fieldId="home.style.accentColor">
-                    <p className="text-xs font-semibold text-slate-500">CTA accent</p>
+                    <p className="text-xs font-semibold text-slate-500">Онцлох/товчны өнгө</p>
                     <p className="mt-1 truncate text-sm font-semibold text-primary">{home.style.accentColor || "Default"}</p>
                   </EditableBlock>
                 </div>
 
-                <div className={cn("grid rounded-2xl", isMobilePreview ? "gap-4 p-3" : "gap-5 p-4 md:grid-cols-[1fr_280px] md:items-center")} style={surfaceStyle(home.style)}>
+                <div className={cn("grid rounded-2xl", isMobilePreview ? "gap-4 p-3" : "gap-5 p-4 md:grid-cols-[1fr_280px] md:items-center")}>
                   <div className="min-w-0">
                     <EditableBlock fieldId="home.heroTitle">
                       <h2 className={cn("text-safe font-bold leading-tight text-primary", heroTitleClass)}>{textValue(home.heroTitle, locale)}</h2>
@@ -512,10 +629,6 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                   <div className="grid gap-3">
                     <EditableBlock fieldId="home.heroImage">
                       <PreviewImage src={home.heroImage} />
-                    </EditableBlock>
-                    <EditableBlock fieldId="home.heroBackgroundImage">
-                      <p className="mb-2 text-xs font-semibold text-slate-500">Hero background image</p>
-                      <PreviewImage src={home.heroBackgroundImage} />
                     </EditableBlock>
                   </div>
                 </div>
@@ -629,7 +742,18 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                 </EditableBlock>
                 <EditableBlock fieldId="about.companyHistory">
                   <h3 className="font-semibold text-primary">Компанийн түүх</h3>
-                  <p className="text-safe mt-2 line-clamp-4 text-sm leading-6 text-slate-500">{stripHtml(textValue(about.companyHistory, locale))}</p>
+                  {aboutHistoryRows.length > 0 ? (
+                    <div className="mt-3 grid gap-2">
+                      {aboutHistoryRows.slice(0, 5).map((item, index) => (
+                        <div key={`${item.label}-${index}`} className="rounded-lg border bg-white/75 p-2">
+                          <p className="text-xs font-semibold uppercase text-slate-400">{item.label}</p>
+                          <p className="text-safe mt-1 text-sm leading-5 text-slate-600">{item.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-safe mt-2 line-clamp-4 text-sm leading-6 text-slate-500">{stripHtml(textValue(about.companyHistory, locale)) || "Хоосон"}</p>
+                  )}
                 </EditableBlock>
                 <EditableBlock fieldId="about.ceoMessage">
                   <h3 className="font-semibold text-primary">CEO мэндчилгээ</h3>
@@ -679,47 +803,12 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                 <EditableBlock fieldId="contact.pageSubtitle">
                   <p className="text-safe text-base leading-7 text-slate-500">{textValue(contactContent.pageSubtitle, locale)}</p>
                 </EditableBlock>
-                <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr]">
-                  <div className="grid gap-3 rounded-2xl p-3" style={surfaceStyle(contactContent.style)}>
-                    <EditableBlock fieldId="contact.infoTitle">
-                      <h3 className="font-semibold text-primary">{textValue(contactContent.infoTitle, locale)}</h3>
-                    </EditableBlock>
-                    <EditableBlock fieldId="contact.companyName">
-                      <p className="text-safe text-sm font-semibold text-slate-700">{textValue(contactContent.companyName, locale)}</p>
-                    </EditableBlock>
-                    <EditableBlock fieldId="contact.phoneNumbers">
-                      <p className="text-safe text-sm text-slate-600">{textValue(contactContent.phoneNumbers, locale)}</p>
-                    </EditableBlock>
-                    <EditableBlock fieldId="contact.email">
-                      <p className="text-safe text-sm text-slate-600">{contactContent.email}</p>
-                    </EditableBlock>
-                    <EditableBlock fieldId="contact.website">
-                      <p className="text-safe truncate text-sm text-slate-600">{contactContent.website || "website"}</p>
-                    </EditableBlock>
-                    <EditableBlock fieldId="contact.contactPerson">
-                      <p className="text-safe text-sm text-slate-600">{textValue(contactContent.contactPerson, locale)}</p>
-                    </EditableBlock>
-                    <EditableBlock fieldId="contact.businessHours">
-                      <p className="text-safe text-sm text-slate-600">{textValue(contactContent.businessHours, locale) || "Ажлын цаг"}</p>
-                    </EditableBlock>
-                    <EditableBlock fieldId="contact.address">
-                      <p className="text-safe text-sm leading-6 text-slate-600">{textValue(contactContent.address, locale)}</p>
-                    </EditableBlock>
-                    <EditableBlock fieldId="contact.googleMapsEmbedUrl">
-                      <div className="flex h-36 items-center justify-center rounded-xl border bg-slate-50 text-sm font-semibold text-slate-500">Google Map</div>
-                    </EditableBlock>
-                    <div className="grid gap-2 sm:grid-cols-3">
-                      <EditableBlock fieldId="contact.facebook">
-                        <p className="text-xs font-semibold text-slate-500">Facebook</p>
-                      </EditableBlock>
-                      <EditableBlock fieldId="contact.instagram">
-                        <p className="text-xs font-semibold text-slate-500">Instagram</p>
-                      </EditableBlock>
-                      <EditableBlock fieldId="contact.linkedin">
-                        <p className="text-xs font-semibold text-slate-500">LinkedIn</p>
-                      </EditableBlock>
+                <div className="grid gap-4 md:grid-cols-[0.95fr_1.05fr]">
+                  <EditableBlock fieldId="contact.googleMapsEmbedUrl" style={surfaceStyle(contactContent.style)}>
+                    <div className="flex h-56 items-center justify-center rounded-2xl border bg-slate-50 text-sm font-semibold text-slate-500">
+                      Google Map
                     </div>
-                  </div>
+                  </EditableBlock>
                   <EditableBlock fieldId="contact.formTitle" style={surfaceStyle(contactContent.style)}>
                     <h3 className="font-semibold text-primary">{textValue(contactContent.formTitle, locale)}</h3>
                     <div className="mt-4 grid gap-3">
@@ -829,16 +918,16 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
         </div>
       </div>
 
-      <div className="xl:sticky xl:top-6 xl:self-start">
-        <Card>
-          <CardHeader>
+      <div className="xl:sticky xl:top-6 xl:max-h-[calc(100dvh-3rem)] xl:self-start">
+        <Card className="overflow-hidden xl:flex xl:max-h-[calc(100dvh-3rem)] xl:flex-col">
+          <CardHeader className="shrink-0">
             <CardTitle className="flex items-center gap-2">
               <Check className="h-5 w-5 text-teal" />
               {activeField.label}
             </CardTitle>
             <p className="text-xs font-semibold uppercase text-slate-400">{activeField.key}</p>
           </CardHeader>
-          <CardContent className="grid gap-4">
+          <CardContent className="grid gap-4 overflow-y-auto overscroll-contain xl:min-h-0 xl:flex-1">
             {activeField.kind.startsWith("localized") && isLocalizedValue(activeValue) ? (
               <div className="grid gap-4">
                 <div className="grid gap-2">
@@ -861,6 +950,88 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
                     <Input value={activeValue.en} onChange={(event) => updateField(activeField, { ...activeValue, en: event.target.value })} />
                   )}
                 </div>
+              </div>
+            ) : null}
+
+            {activeField.kind === "history-table" && isLocalizedValue(activeValue) ? (
+              <div className="grid gap-5">
+                {(["mn", "en"] as Locale[]).map((language) => {
+                  const rows = historyRowsFromHtml(activeValue[language]);
+
+                  return (
+                    <div key={language} className="grid gap-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <Label>{language.toUpperCase()} мөрүүд</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updateField(activeField, { ...activeValue, [language]: historyRowsToHtml([...rows, { label: "", value: "" }]) })}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Нэмэх
+                        </Button>
+                      </div>
+                      {rows.length === 0 ? (
+                        <p className="rounded-lg border border-dashed p-3 text-sm text-slate-500">Мөр алга байна. Нэмэх товчоор эхлүүлнэ.</p>
+                      ) : null}
+                      {rows.map((item, index, items) => (
+                        <div key={`${language}-${index}`} className="grid gap-2 rounded-lg border p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <Label className="text-xs text-slate-500">#{index + 1}</Label>
+                            <div className="flex gap-1">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                disabled={index === 0}
+                                onClick={() => updateField(activeField, { ...activeValue, [language]: historyRowsToHtml(moveItem(items, index, -1)) })}
+                              >
+                                <ArrowUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                disabled={index === items.length - 1}
+                                onClick={() => updateField(activeField, { ...activeValue, [language]: historyRowsToHtml(moveItem(items, index, 1)) })}
+                              >
+                                <ArrowDown className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => updateField(activeField, { ...activeValue, [language]: historyRowsToHtml(items.filter((_, current) => current !== index)) })}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <Label className="text-xs text-slate-500">Гарчиг / label</Label>
+                          <Input
+                            value={item.label}
+                            onChange={(event) => updateField(activeField, {
+                              ...activeValue,
+                              [language]: historyRowsToHtml(items.map((value, current) => current === index ? { ...value, label: event.target.value } : value))
+                            })}
+                            placeholder={language === "mn" ? "Байгуулагдсан он" : "Established"}
+                          />
+                          <Label className="text-xs text-slate-500">Утга</Label>
+                          <Textarea
+                            rows={3}
+                            value={item.value}
+                            onChange={(event) => updateField(activeField, {
+                              ...activeValue,
+                              [language]: historyRowsToHtml(items.map((value, current) => current === index ? { ...value, value: event.target.value } : value))
+                            })}
+                            placeholder={language === "mn" ? "2019 он" : "2019"}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
 
@@ -1166,11 +1337,13 @@ export function VisualContentEditor({ initialValue }: { initialValue: VisualCont
               </div>
             ) : null}
 
-            {message ? <p className="text-sm text-slate-500">{message}</p> : null}
-            <Button type="button" onClick={() => void saveAll()} disabled={saving || dirtyKeys.size === 0}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Хадгалах
-            </Button>
+            <div className="sticky bottom-0 -mx-6 -mb-6 grid gap-3 border-t bg-white/96 px-6 py-4 backdrop-blur">
+              {message ? <p className="text-sm text-slate-500">{message}</p> : null}
+              <Button type="button" onClick={() => void saveAll()} disabled={saving || dirtyKeys.size === 0}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Хадгалах
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

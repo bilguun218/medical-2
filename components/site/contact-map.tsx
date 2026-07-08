@@ -6,11 +6,13 @@ import type { Locale } from "@/lib/i18n";
 export function ContactMap({
   locale,
   mapInput,
-  fallbackLocation
+  fallbackLocation,
+  showLabel = true
 }: {
   locale: Locale;
   mapInput: string;
   fallbackLocation: string;
+  showLabel?: boolean;
 }) {
   const map = resolveGoogleMapSource(mapInput, fallbackLocation);
 
@@ -32,7 +34,7 @@ export function ContactMap({
           </span>
           <div className="min-w-0">
             <h3 className="text-safe text-lg font-semibold leading-tight text-primary">{title}</h3>
-            <p className="text-safe mt-1 text-sm leading-6 text-slate-500">{label}</p>
+            {showLabel ? <p className="text-safe mt-1 text-sm leading-6 text-slate-500">{label}</p> : null}
           </div>
         </div>
         {map.searchUrl ? (

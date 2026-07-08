@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { existsSync } from "fs";
 import path from "path";
@@ -119,6 +120,16 @@ async function resolveHeroImage(imageCandidates: string[]) {
   return "/brand/novytas-logo.png";
 }
 
+function themeBackgroundColor(value: string) {
+  const color = value.trim().toLowerCase();
+
+  if (!/^#[0-9a-f]{6}$/i.test(color) || color === "#ffffff") {
+    return "";
+  }
+
+  return color;
+}
+
 export default async function HomePage({ params }: PageProps) {
   const { locale: rawLocale } = await params;
   const locale = getLocale(rawLocale);
@@ -152,27 +163,20 @@ export default async function HomePage({ params }: PageProps) {
     { icon: "service" as const, label: locale === "mn" ? "Засвар үйлчилгээ" : "Maintenance service" }
   ];
   const partnerSources = sourceCountries.map((country) => tText(country, locale));
+  const homeCustomBackground = themeBackgroundColor(content.style.backgroundColor) || themeBackgroundColor(content.style.surfaceColor);
   const pageStyle = {
-    backgroundColor: content.style.backgroundColor || undefined,
+    ...(homeCustomBackground ? { "--home-page-bg": homeCustomBackground } : {}),
     color: content.style.foregroundColor || undefined
-  };
-  const heroStyle = {
-    ...(content.heroBackgroundImage ? { backgroundImage: `url(${content.heroBackgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" } : {}),
-    backgroundColor: content.style.surfaceColor || undefined
-  };
+  } as CSSProperties;
   const accentStyle = {
     backgroundColor: content.style.accentColor || undefined
   };
 
   return (
-    <main className="page-reveal" style={pageStyle}>
+    <main className="page-reveal home-page" style={pageStyle}>
       <section
-        className="home-hero-shell relative isolate overflow-hidden"
-        style={heroStyle}
+        className="home-section home-hero-shell relative isolate overflow-hidden"
       >
-        <div className="pointer-events-none absolute left-[8%] top-20 h-72 w-72 rounded-full bg-medical/10 blur-3xl" />
-        <div className="pointer-events-none absolute right-[16%] top-10 h-56 w-56 rounded-full bg-teal/10 blur-3xl" />
-        <div className="home-hero-geometry pointer-events-none absolute inset-0" />
         <div className="premium-container relative z-10 grid items-center gap-8 pb-8 pt-7 md:pb-10 md:pt-10 lg:min-h-[560px] lg:grid-cols-12 lg:gap-8 lg:py-12">
           <MotionReveal className="lg:col-span-6">
             <Badge className="mb-4 w-fit border-white/80 bg-white/78 shadow-sm backdrop-blur-xl">{dict.home.eyebrow}</Badge>
@@ -211,7 +215,7 @@ export default async function HomePage({ params }: PageProps) {
 
       <PartnerMarquee label={locale === "mn" ? "Олон улсын эх сурвалж" : "Global source network"} items={partnerSources} />
 
-      <section className="py-14 md:py-16 lg:py-20">
+      <section className="home-section py-14 md:py-16 lg:py-20">
         <div className="premium-container">
           <MotionReveal>
             <SectionHeading
@@ -244,7 +248,7 @@ export default async function HomePage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="py-14 md:py-16 lg:py-20 bg-white/72">
+      <section className="home-section py-14 md:py-16 lg:py-20">
         <div className="premium-container">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <MotionReveal>
@@ -305,7 +309,7 @@ export default async function HomePage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="premium-section">
+      <section className="home-section premium-section">
         <div className="premium-container grid gap-12 lg:grid-cols-12 lg:items-center">
           <MotionReveal className="lg:col-span-5">
             <SectionHeading
@@ -334,7 +338,7 @@ export default async function HomePage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="premium-section bg-white/72">
+      <section className="home-section premium-section">
         <div className="premium-container">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <MotionReveal>
@@ -388,7 +392,7 @@ export default async function HomePage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="premium-section">
+      <section className="home-section premium-section">
         <div className="premium-container">
           <MotionReveal>
             <div className="grid gap-8 rounded-[1.5rem] bg-primary p-8 text-white shadow-premium md:p-12 lg:grid-cols-[1fr_auto] lg:items-center" style={accentStyle}>

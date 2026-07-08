@@ -145,6 +145,11 @@ const defaultStyle = {
   surfaceColor: "",
   accentColor: ""
 };
+const defaultFooterSocialLinks = [
+  { label: "Facebook", href: "", order: 0, visible: true },
+  { label: "Instagram", href: "", order: 1, visible: true },
+  { label: "LinkedIn", href: "", order: 2, visible: true }
+];
 const companyProfileDetails = text(
   `<table><tbody><tr><th>Компанийн нэр</th><td>Новитас ХХК (Novytas LLC)</td></tr><tr><th>Байгуулагдсан он</th><td>2019 он</td></tr><tr><th>Үйл ажиллагааны чиглэл</th><td>Эмнэлгийн тоног төхөөрөмж, эм, эмнэлгийн хэрэгслийн импорт, худалдаа</td></tr><tr><th>Тусгай зөвшөөрөл</th><td>Эм ханган нийлүүлэх байгууллагын тусгай зөвшөөрөл; Эмнэлгийн хэрэгсэл, тоног төхөөрөмж ханган нийлүүлэх тусгай зөвшөөрөл</td></tr><tr><th>Регистрийн дугаар</th><td>6449808</td></tr><tr><th>Хаяг</th><td>Монгол Улс, Улаанбаатар хот, Сүхбаатар дүүрэг, 73/6-42</td></tr></tbody></table>`,
   `<table><tbody><tr><th>Company name</th><td>Novytas LLC</td></tr><tr><th>Established</th><td>2019</td></tr><tr><th>Business scope</th><td>Import and trade of medical equipment, medicines, and medical supplies</td></tr><tr><th>Special licenses</th><td>Pharmaceutical supply organization license; medical supplies and equipment supply license</td></tr><tr><th>Registration number</th><td>6449808</td></tr><tr><th>Address</th><td>Sukhbaatar District, 73/6-42, Ulaanbaatar, Mongolia</td></tr></tbody></table>`
@@ -241,7 +246,7 @@ export const cmsDefaults: CmsContentMap = {
       { href: "/news", order: 2, visible: true, label: text(dictionary.mn.nav.news, dictionary.en.nav.news) },
       { href: "/contact", order: 3, visible: true, label: text(dictionary.mn.nav.contact, dictionary.en.nav.contact) }
     ],
-    socialLinks: []
+    socialLinks: defaultFooterSocialLinks
   }
 };
 

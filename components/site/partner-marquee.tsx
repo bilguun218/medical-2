@@ -6,7 +6,7 @@ export function PartnerMarquee({
   items: string[];
 }) {
   return (
-    <section className="border-y border-slate-200/70 bg-white/72 py-5 dark:border-white/10 dark:bg-white/5">
+    <section className="home-section border-y border-slate-200/70 py-5 dark:border-white/10">
       <div className="premium-container grid gap-4 lg:grid-cols-[220px_1fr] lg:items-center">
         <p className="text-safe text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</p>
         <div className="home-partner-marquee">

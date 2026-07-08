@@ -1,9 +1,28 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Globe2, Mail, MapPin, Phone, ShieldCheck, UserRound } from "lucide-react";
+import { ExternalLink, Facebook, Globe2, Instagram, Linkedin, Mail, MapPin, Phone, ShieldCheck, UserRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { getCmsContent, localized, localizedHref } from "@/lib/cms";
+
+function getSocialIcon(label: string) {
+  const normalized = label.toLowerCase();
+
+  if (normalized.includes("facebook")) return Facebook;
+  if (normalized.includes("instagram")) return Instagram;
+  if (normalized.includes("linkedin")) return Linkedin;
+  return ExternalLink;
+}
+
+function externalHref(value: string) {
+  const href = value.trim();
+
+  if (!href) {
+    return "";
+  }
+
+  return href.startsWith("http://") || href.startsWith("https://") ? href : `https://${href}`;
+}
 
 export async function SiteFooter({ locale }: { locale: Locale }) {
   const [footer, header, contact] = await Promise.all([
@@ -25,7 +44,8 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
   if (address) contactText.push({ label: address, icon: MapPin });
   if (contactPerson) contactText.push({ label: contactPerson, icon: UserRound });
   const socialLinks = footer.socialLinks
-    .filter((item) => item.visible && item.href !== websiteHref)
+    .map((item) => ({ ...item, href: externalHref(item.href) }))
+    .filter((item) => item.visible && item.href && item.href !== websiteHref)
     .sort((a, b) => a.order - b.order);
   const footerStyle = {
     backgroundColor: footer.style.backgroundColor || undefined,
@@ -53,6 +73,27 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
             <ShieldCheck className="h-4 w-4 text-teal" />
             {locale === "mn" ? "ЭМЯ-ны тусгай зөвшөөрлийн хүрээнд" : "Operating under MOH licensing"}
           </div>
+          {socialLinks.length > 0 ? (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {socialLinks.map((link) => {
+                const Icon = getSocialIcon(link.label);
+
+                return (
+                  <a
+                    key={`${link.label}-${link.order}`}
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={link.label}
+                    title={link.label}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.06] text-slate-200 transition hover:border-teal/40 hover:bg-white/[0.12] hover:text-white"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
 
         <div className="lg:col-span-3">
@@ -83,17 +124,6 @@ export async function SiteFooter({ locale }: { locale: Locale }) {
               <li key={item.label} className="flex items-start gap-3 rounded-xl bg-white/[0.04] px-3 py-2.5">
                 <item.icon className="mt-0.5 h-4 w-4 shrink-0 text-teal" />
                 <span>{item.label}</span>
-              </li>
-            ))}
-            {socialLinks.map((link) => (
-              <li key={`${link.label}-${link.order}`}>
-                {link.href ? (
-                  <a className="transition hover:text-white" href={link.href}>
-                    {link.label}
-                  </a>
-                ) : (
-                  link.label
-                )}
               </li>
             ))}
           </ul>
