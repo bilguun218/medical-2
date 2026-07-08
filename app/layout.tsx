@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.variable} min-h-screen font-sans antialiased`}>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
